@@ -27,5 +27,6 @@ public:
 	void uniform(const char *, float) const; 
 	void uniform(const char *, int) const;
 	void uniform(const char *, const Matrix3&) const;
+	void uniform(const char *, const Vector3&) const;
 	void enableAttribPointer(const char *, GLint, GLint, GLsizei) const;
 };

@@ -30,8 +30,10 @@ const char *DEFAULT_VERT_SHADER = R"(
 )";
 
 glm::vec2 mouse = glm::vec2(0.0f);
+Vector3 cameraPosition; 
 float forward =  0.0f;
 float up = 0.0;
+
 unsigned ticks = 0;
 
 #ifdef SDL_ENABLED
@@ -163,24 +165,35 @@ static void handleInput(void) {
 	const float rotYStep = 0.01f;
 	const float movStep  = 0.11f;
 
+	float movingForward = 0.0;
+	float movingSideways = 0.0;
+
 	if(keys[KEY_LEFT])  { mouse.x -= rotXStep; }
 	if(keys[KEY_RIGHT]) { mouse.x += rotXStep; }
 	if(keys[KEY_UP])    { mouse.y -= rotYStep; }
 	if(keys[KEY_DOWN])  { mouse.y += rotYStep; }
-	if(keys[KEY_W])     { forward += movStep;  }
-	if(keys[KEY_S])     { forward -= movStep;  }
-	if(keys[KEY_Z])     { up += movStep;  }
-	if(keys[KEY_X])     { up -= movStep;  }
+	if(keys[KEY_W])     { movingForward += movStep;  }
+	if(keys[KEY_S])     { movingForward -= movStep;  }
+	if(keys[KEY_Z])     { movingSideways += movStep;  }
+	if(keys[KEY_X])     { movingSideways -= movStep;  }
 	if(keys[KEY_SPACE]) {
+		Vector3 cameraPosition = Vector3();
 		mouse = glm::vec2(0.0f);
 		forward = 0.0f;
 		up = 2.0f;
 		ticks = 0;
 	}
 
+
 	if (g_VALIDGLSTATE) {
 		Matrix3 a = rotateY(mouse.x) * rotateX(mouse.y);
+		Vector3 rd = (a * Vector3(0.0, 0.0, 1.0)).normalize();
+		Vector3 right = (a * Vector3(1.0, 0.0, 0.0)).normalize();
+		cameraPosition = cameraPosition + rd * movingForward;
+		cameraPosition = cameraPosition + right * movingSideways;
+
 		currentProgram->uniform("viewMatrix", a);
+		currentProgram->uniform("viewPosition", cameraPosition);
 		currentProgram->uniform("mouse", mouse);
 		currentProgram->uniform("forward", forward);
 		currentProgram->uniform("up", up);
