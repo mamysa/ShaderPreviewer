@@ -151,10 +151,20 @@ bool RUNNING = true;
 bool STAGE_ONE_SUCCESS = false;
 bool STAGE2_SUCCESS = false;
 
+void drawQuad(void) {
+	glm::vec2 resolution = glm::vec2((float)W, (float)H);
+	quad->setupAttributes(*currentProgram);
+	float tickf = ((float)ticks) * 0.1;
+	currentProgram->uniform("resolution", resolution);
+	currentProgram->uniform("iGlobalTime", tickf);
+	quad->bind();
+	quad->draw();
+	quad->bind(0);
+}
+
 
 
 int WINAPI wWinMain(HINSTANCE hInstance, HINSTANCE, PWSTR pCmdLine, int nCmdShow) {
-
 	// Register the window class.
 	const char *CLASS_NAME = "Sample Window Class";
 
@@ -180,7 +190,18 @@ int WINAPI wWinMain(HINSTANCE hInstance, HINSTANCE, PWSTR pCmdLine, int nCmdShow
 		return 2;	
 	}
 
+	const char *shaderPath = "D://Projects/ShaderPreviewV2/shaders/shadertoys/tube2.frag";
+	ShaderProgram myShaderProgram;
+	myShaderProgram.addShader(DEFAULT_VERT_SHADER, GL_VERTEX_SHADER);
+	myShaderProgram.addShader(readTextFile(shaderPath).c_str(), GL_FRAGMENT_SHADER);
+        
+	g_VALIDGLSTATE = myShaderProgram.link();
+	shaderWatcher.add(shaderPath, &myShaderProgram, GL_FRAGMENT_SHADER);
+	currentProgram = &myShaderProgram;
+	assert(glGetError() == GL_NO_ERROR);
 
+
+	quad = createQuad();
 
 	ShowWindow(hwnd, nCmdShow);
 
@@ -191,18 +212,47 @@ int WINAPI wWinMain(HINSTANCE hInstance, HINSTANCE, PWSTR pCmdLine, int nCmdShow
 	RUNNING =true;
 	MSG msg = { };
 	HDC deviceContext = GetDC(hwnd);
+	assert(glGetError() == GL_NO_ERROR);
 	for (;;) {
-		while (GetMessage(&msg, NULL, 0, 0)) {
-			TranslateMessage(&msg);
-			DispatchMessage(&msg);
-		}
+		
+		auto frameStart = std::chrono::high_resolution_clock::now();
 
 		glClearColor(1.0, 1.0, 0.0, 1.0);
 		glClear(GL_COLOR_BUFFER_BIT);
+		//g_VALIDGLSTATE = shaderWatcher.watch();
+
+		if (g_VALIDGLSTATE && RUNNING) {
+			currentProgram->use();
+			drawQuad();
+			currentProgram->use(0);
+		}
+
 		SwapBuffers(deviceContext);	
-		if(!RUNNING) break;
-		
+		glFinish();
+
+		auto frameEnd = std::chrono::high_resolution_clock::now();
+		auto ms = std::chrono::duration_cast<std::chrono::milliseconds>(frameEnd- frameStart);
+		float fps = 1.0f / ((float)ms.count() * 0.001f);
+		std::string timestr = std::to_string((int)floor(fps)) + " FPS\n";
+
+		SetWindowText(hwnd, timestr.c_str());
+		ticks++;
+
+
+
+		if(!RUNNING) {
+			break;
+		}
+
+		while (PeekMessage(&msg, NULL, 0, 0, PM_REMOVE)) {
+			TranslateMessage(&msg);
+			DispatchMessage(&msg);
+		}
 	}
+
+	//currentProgram->use(0);
+	//currentProgram->~ShaderProgram();
+	
 
 	DestroyWindow(hwnd);
 	return 0;
@@ -251,7 +301,6 @@ LRESULT CALLBACK WindowProc(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
 				return 0;
 			}
 
-
 			// Initialize the basic OpenGL context and get function pointers...
 			if (!STAGE_ONE_SUCCESS) {
 				PIXELFORMATDESCRIPTOR descriptor;
@@ -279,9 +328,22 @@ LRESULT CALLBACK WindowProc(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
 		}
 		case WM_DESTROY: {
 			RUNNING = false;
+			// release resources....
+			if (STAGE2_SUCCESS) {
+				//currentProgram->use(0);
+				//currentProgram->~ShaderProgram();
+				//quad->bind(0);
+				//quad->~GLMesh();
+			}
+
 			wglMakeCurrent(GetDC(hwnd), NULL);
 			wglDeleteContext(glContext);
 			PostQuitMessage(0);
+			return 0;
+		}
+
+		case WM_KEYDOWN: {
+			//if (wParam)  { }
 			return 0;
 		}
 	}
