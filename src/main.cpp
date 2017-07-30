@@ -144,6 +144,49 @@ exit:
 #include <windows.h>
 
 
+enum KeyboardMap {
+	KEY_LEFT = 0,
+	KEY_RIGHT,
+	KEY_UP,
+	KEY_DOWN,
+	KEY_SPACE,
+	KEY_W, 
+	KEY_S,
+	KEY_X,
+	KEY_Z,
+};
+
+bool keys[9] = {0};
+
+static void handleInput(void) {
+	const float rotXStep = 0.01f;
+	const float rotYStep = 0.01f;
+	const float movStep  = 0.11f;
+
+	if(keys[KEY_LEFT])  { mouse.x -= rotXStep; }
+	if(keys[KEY_RIGHT]) { mouse.x += rotXStep; }
+	if(keys[KEY_UP])    { mouse.y += rotYStep; }
+	if(keys[KEY_DOWN])  { mouse.y -= rotYStep; }
+	if(keys[KEY_W])     { forward += movStep;  }
+	if(keys[KEY_S])     { forward -= movStep;  }
+	if(keys[KEY_Z])     { up += movStep;  }
+	if(keys[KEY_X])     { up -= movStep;  }
+	if(keys[KEY_SPACE]) {
+		mouse = glm::vec2(0.0f);
+		forward = 0.0f;
+		up = 2.0f;
+		ticks = 0;
+	}
+
+	if (g_VALIDGLSTATE) {
+		currentProgram->uniform("mouse", mouse);
+		currentProgram->uniform("forward", forward);
+		currentProgram->uniform("up", up);
+	}
+}
+
+
+
 LRESULT CALLBACK WindowProc(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam);
 
 HGLRC glContext;
@@ -237,13 +280,12 @@ int WINAPI wWinMain(HINSTANCE hInstance, HINSTANCE, PWSTR pCmdLine, int nCmdShow
 
 		SetWindowText(hwnd, timestr.c_str());
 		ticks++;
-
+		handleInput();
 
 
 		if(!RUNNING) {
 			break;
 		}
-
 		while (PeekMessage(&msg, NULL, 0, 0, PM_REMOVE)) {
 			TranslateMessage(&msg);
 			DispatchMessage(&msg);
@@ -328,13 +370,8 @@ LRESULT CALLBACK WindowProc(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
 		}
 		case WM_DESTROY: {
 			RUNNING = false;
-			// release resources....
-			if (STAGE2_SUCCESS) {
-				//currentProgram->use(0);
-				//currentProgram->~ShaderProgram();
-				//quad->bind(0);
-				//quad->~GLMesh();
-			}
+			// TODO release resources....
+			
 
 			wglMakeCurrent(GetDC(hwnd), NULL);
 			wglDeleteContext(glContext);
@@ -343,7 +380,28 @@ LRESULT CALLBACK WindowProc(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
 		}
 
 		case WM_KEYDOWN: {
-			//if (wParam)  { }
+			if (wParam == VK_LEFT)   { keys[KEY_LEFT]  = 1; }
+			if (wParam == VK_RIGHT)  { keys[KEY_RIGHT] = 1; }
+			if (wParam == VK_UP)     { keys[KEY_UP] = 1; }
+			if (wParam == VK_DOWN)   { keys[KEY_DOWN] = 1; }
+			if (wParam == 'W')  { keys[KEY_W] = 1; }
+			if (wParam == 'S')  { keys[KEY_S] = 1; }
+			if (wParam == 'X')  { keys[KEY_X] = 1; }
+			if (wParam == 'Z')  { keys[KEY_Z] = 1; }
+			if (wParam == VK_SPACE)  { keys[KEY_SPACE] = 1; }
+			return 0;
+		}
+
+		case WM_KEYUP: {
+			if (wParam == VK_LEFT)   { keys[KEY_LEFT]  = 0; }
+			if (wParam == VK_RIGHT)  { keys[KEY_RIGHT] = 0; }
+			if (wParam == VK_UP)     { keys[KEY_UP] = 0; }
+			if (wParam == VK_DOWN)   { keys[KEY_DOWN] = 0; }
+			if (wParam == 'W')  { keys[KEY_W] = 0; }
+			if (wParam == 'S')  { keys[KEY_S] = 0; }
+			if (wParam == 'X')  { keys[KEY_X] = 0; }
+			if (wParam == 'Z')  { keys[KEY_Z] = 0; }
+			if (wParam == VK_SPACE)  { keys[KEY_SPACE] = 0; }
 			return 0;
 		}
 	}
