@@ -165,8 +165,8 @@ static void handleInput(void) {
 
 	if(keys[KEY_LEFT])  { mouse.x -= rotXStep; }
 	if(keys[KEY_RIGHT]) { mouse.x += rotXStep; }
-	if(keys[KEY_UP])    { mouse.y += rotYStep; }
-	if(keys[KEY_DOWN])  { mouse.y -= rotYStep; }
+	if(keys[KEY_UP])    { mouse.y -= rotYStep; }
+	if(keys[KEY_DOWN])  { mouse.y += rotYStep; }
 	if(keys[KEY_W])     { forward += movStep;  }
 	if(keys[KEY_S])     { forward -= movStep;  }
 	if(keys[KEY_Z])     { up += movStep;  }
@@ -179,6 +179,8 @@ static void handleInput(void) {
 	}
 
 	if (g_VALIDGLSTATE) {
+		Matrix3 a = rotateY(mouse.x) * rotateX(mouse.y);
+		currentProgram->uniform("viewMatrix", a);
 		currentProgram->uniform("mouse", mouse);
 		currentProgram->uniform("forward", forward);
 		currentProgram->uniform("up", up);
@@ -205,7 +207,7 @@ void drawQuad(void) {
 	quad->bind(0);
 }
 
-
+#include "utils/Math.h"
 
 int WINAPI wWinMain(HINSTANCE hInstance, HINSTANCE, PWSTR pCmdLine, int nCmdShow) {
 	// Register the window class.
@@ -233,7 +235,7 @@ int WINAPI wWinMain(HINSTANCE hInstance, HINSTANCE, PWSTR pCmdLine, int nCmdShow
 		return 2;	
 	}
 
-	const char *shaderPath = "D://Projects/ShaderPreviewV2/shaders/shadertoys/tube2.frag";
+	const char *shaderPath = "D://Projects/shaders/tube1.frag";
 	ShaderProgram myShaderProgram;
 	myShaderProgram.addShader(DEFAULT_VERT_SHADER, GL_VERTEX_SHADER);
 	myShaderProgram.addShader(readTextFile(shaderPath).c_str(), GL_FRAGMENT_SHADER);
@@ -262,16 +264,20 @@ int WINAPI wWinMain(HINSTANCE hInstance, HINSTANCE, PWSTR pCmdLine, int nCmdShow
 
 		glClearColor(1.0, 1.0, 0.0, 1.0);
 		glClear(GL_COLOR_BUFFER_BIT);
-		//g_VALIDGLSTATE = shaderWatcher.watch();
+		if (RUNNING) {
+			g_VALIDGLSTATE = shaderWatcher.watch();
+			handleInput();
 
-		if (g_VALIDGLSTATE && RUNNING) {
-			currentProgram->use();
-			drawQuad();
-			currentProgram->use(0);
+			if (g_VALIDGLSTATE && RUNNING) {
+				currentProgram->use();
+				drawQuad();
+				currentProgram->use(0);
+			}
+
+			SwapBuffers(deviceContext);	
+			glFinish();
+
 		}
-
-		SwapBuffers(deviceContext);	
-		glFinish();
 
 		auto frameEnd = std::chrono::high_resolution_clock::now();
 		auto ms = std::chrono::duration_cast<std::chrono::milliseconds>(frameEnd- frameStart);
@@ -280,10 +286,11 @@ int WINAPI wWinMain(HINSTANCE hInstance, HINSTANCE, PWSTR pCmdLine, int nCmdShow
 
 		SetWindowText(hwnd, timestr.c_str());
 		ticks++;
-		handleInput();
 
+		assert(glGetError() == GL_NO_ERROR);
 
 		if(!RUNNING) {
+			shaderWatcher.clear();
 			break;
 		}
 		while (PeekMessage(&msg, NULL, 0, 0, PM_REMOVE)) {
@@ -370,9 +377,8 @@ LRESULT CALLBACK WindowProc(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
 		}
 		case WM_DESTROY: {
 			RUNNING = false;
-			// TODO release resources....
-			
 
+			// TODO error when trying to make current here..
 			wglMakeCurrent(GetDC(hwnd), NULL);
 			wglDeleteContext(glContext);
 			PostQuitMessage(0);

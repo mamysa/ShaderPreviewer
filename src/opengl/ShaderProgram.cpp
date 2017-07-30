@@ -2,6 +2,7 @@
 #include <iostream>
 #include "ext.hpp"
 #define ERRORMESG_BUF_LENGTH 1024
+#include "utils/Math.h"
 
 ShaderProgram::ShaderProgram(void) :
 m_vertshaderID(0),
@@ -85,6 +86,12 @@ void ShaderProgram::uniform(const char *str, const glm::vec3& n) const {
 	GLuint uniform = glGetUniformLocation(m_programID, str);
 	glProgramUniform3fv(m_programID, uniform, 1, glm::value_ptr(n));
 }
+
+void ShaderProgram::uniform(const char *str, const Matrix3& n) const {
+	GLuint uniform = glGetUniformLocation(m_programID, str);
+	glProgramUniformMatrix3fv(m_programID, uniform, 1, GL_FALSE, n.getBuffer());
+}
+
 
 void ShaderProgram::uniform(const char *str, const glm::vec2& n) const {
 	GLuint uniform = glGetUniformLocation(m_programID, str);

@@ -2,6 +2,7 @@
 #include "GL/glew.h"
 #include <GL/gl.h>
 #include "glm.hpp"
+#include "utils/Math.h"
 #include <unordered_map>
 
 class ShaderProgram {
@@ -25,5 +26,6 @@ public:
 	void uniform(const char *, const glm::vec2&) const;
 	void uniform(const char *, float) const; 
 	void uniform(const char *, int) const;
+	void uniform(const char *, const Matrix3&) const;
 	void enableAttribPointer(const char *, GLint, GLint, GLsizei) const;
 };
