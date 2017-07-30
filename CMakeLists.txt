@@ -7,7 +7,7 @@ set (SOURCE_FILES
 	${PROJECT_SOURCE_DIR}/src/ShaderWatcher.cpp
 	${PROJECT_SOURCE_DIR}/src/opengl/ShaderProgram.cpp
 	${PROJECT_SOURCE_DIR}/src/opengl/Mesh.cpp
-	${PROJECT_SOURCE_DIR}/src/opengl/Texture.cpp
+	${PROJECT_SOURCE_DIR}/src/utils/Math.cpp
 )
 
 if (SDL_ENABLED)
@@ -27,6 +27,7 @@ include_directories(${OPENGL_INCLUDE_DIRS})
 
 include_directories(${PROJECT_SOURCE_DIR}/src/)
 include_directories(${PROJECT_SOURCE_DIR}/src/opengl/)
+include_directories(${PROJECT_SOURCE_DIR}/utils/)
 
 
 target_link_libraries(ShaderPreviewV2 ${PROJECT_SOURCE_DIR}/libs/glew2.0.0/lib/x64/glew32.lib)
