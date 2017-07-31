@@ -9,7 +9,6 @@
 #include "GL/wglew.h"
 #include <GL/gl.h>
 #endif
-#include "glm.hpp"
 #include "opengl/ShaderProgram.h"
 #include "opengl/Mesh.h"
 #include "ShaderWatcher.h"
@@ -29,11 +28,8 @@ const char *DEFAULT_VERT_SHADER = R"(
 	void main(void) { gl_Position = position; fragTexCoord = texCoord; }
 )";
 
-glm::vec2 mouse = glm::vec2(0.0f);
+Vector3 mouseCoordinates;
 Vector3 cameraPosition; 
-float forward =  0.0f;
-float up = 0.0;
-
 unsigned ticks = 0;
 
 #ifdef SDL_ENABLED
@@ -152,51 +148,53 @@ enum KeyboardMap {
 	KEY_UP,
 	KEY_DOWN,
 	KEY_SPACE,
+	KEY_C,
 	KEY_W, 
 	KEY_S,
-	KEY_X,
-	KEY_Z,
+	KEY_A,
+	KEY_D,
+	KEY_ESC,
 };
 
-bool keys[9] = {0};
+bool keys[11] = {0};
 
 static void handleInput(void) {
 	const float rotXStep = 0.01f;
 	const float rotYStep = 0.01f;
-	const float movStep  = 0.11f;
+	const float movStep  = 0.06f;
 
-	float movingForward = 0.0;
-	float movingSideways = 0.0;
+	float movingForward  = 0.0f;
+	float movingSideways = 0.0f;
+	float movingUp       = 0.0f;
 
-	if(keys[KEY_LEFT])  { mouse.x -= rotXStep; }
-	if(keys[KEY_RIGHT]) { mouse.x += rotXStep; }
-	if(keys[KEY_UP])    { mouse.y -= rotYStep; }
-	if(keys[KEY_DOWN])  { mouse.y += rotYStep; }
-	if(keys[KEY_W])     { movingForward += movStep;  }
-	if(keys[KEY_S])     { movingForward -= movStep;  }
-	if(keys[KEY_Z])     { movingSideways += movStep;  }
-	if(keys[KEY_X])     { movingSideways -= movStep;  }
-	if(keys[KEY_SPACE]) {
-		Vector3 cameraPosition = Vector3();
-		mouse = glm::vec2(0.0f);
-		forward = 0.0f;
-		up = 2.0f;
+	if(keys[KEY_LEFT])  { mouseCoordinates.x -= rotXStep; }
+	if(keys[KEY_RIGHT]) { mouseCoordinates.x += rotXStep; }
+	if(keys[KEY_UP])    { mouseCoordinates.y -= rotYStep; }
+	if(keys[KEY_DOWN])  { mouseCoordinates.y += rotYStep; }
+	if(keys[KEY_W])     { movingForward  += movStep;  }
+	if(keys[KEY_S])     { movingForward  -= movStep;  }
+	if(keys[KEY_D])     { movingSideways += movStep;  }
+	if(keys[KEY_A])     { movingSideways -= movStep;  }
+	if(keys[KEY_C])     { movingUp -= movStep; }
+	if(keys[KEY_SPACE]) { movingUp += movStep; }
+	if(keys[KEY_ESC]) {
+		cameraPosition = Vector3();
+		mouseCoordinates = Vector3();
 		ticks = 0;
 	}
 
 
 	if (g_VALIDGLSTATE) {
-		Matrix3 a = rotateY(mouse.x) * rotateX(mouse.y);
+		Matrix3 a = rotateY(mouseCoordinates.x) * rotateX(mouseCoordinates.y);
 		Vector3 rd = (a * Vector3(0.0, 0.0, 1.0)).normalize();
 		Vector3 right = (a * Vector3(1.0, 0.0, 0.0)).normalize();
+		Vector3 up = (a * Vector3(0.0, 1.0, 0.0)).normalize();
 		cameraPosition = cameraPosition + rd * movingForward;
 		cameraPosition = cameraPosition + right * movingSideways;
+		cameraPosition = cameraPosition + up * movingUp;
 
 		currentProgram->uniform("viewMatrix", a);
 		currentProgram->uniform("viewPosition", cameraPosition);
-		currentProgram->uniform("mouse", mouse);
-		currentProgram->uniform("forward", forward);
-		currentProgram->uniform("up", up);
 	}
 }
 
@@ -262,7 +260,6 @@ int WINAPI wWinMain(HINSTANCE hInstance, HINSTANCE, PWSTR pCmdLine, int nCmdShow
 	quad = createQuad();
 
 	ShowWindow(hwnd, nCmdShow);
-
 	
 	
 
@@ -405,9 +402,11 @@ LRESULT CALLBACK WindowProc(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
 			if (wParam == VK_DOWN)   { keys[KEY_DOWN] = 1; }
 			if (wParam == 'W')  { keys[KEY_W] = 1; }
 			if (wParam == 'S')  { keys[KEY_S] = 1; }
-			if (wParam == 'X')  { keys[KEY_X] = 1; }
-			if (wParam == 'Z')  { keys[KEY_Z] = 1; }
+			if (wParam == 'A')  { keys[KEY_A] = 1; }
+			if (wParam == 'D')  { keys[KEY_D] = 1; }
+			if (wParam == 'C')  { keys[KEY_C] = 1; }
 			if (wParam == VK_SPACE)  { keys[KEY_SPACE] = 1; }
+			if (wParam == VK_ESCAPE) { keys[KEY_ESC] = 1; }
 			return 0;
 		}
 
@@ -418,9 +417,11 @@ LRESULT CALLBACK WindowProc(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
 			if (wParam == VK_DOWN)   { keys[KEY_DOWN] = 0; }
 			if (wParam == 'W')  { keys[KEY_W] = 0; }
 			if (wParam == 'S')  { keys[KEY_S] = 0; }
-			if (wParam == 'X')  { keys[KEY_X] = 0; }
-			if (wParam == 'Z')  { keys[KEY_Z] = 0; }
+			if (wParam == 'A')  { keys[KEY_A] = 0; }
+			if (wParam == 'D')  { keys[KEY_D] = 0; }
+			if (wParam == 'C')  { keys[KEY_C] = 0; }
 			if (wParam == VK_SPACE)  { keys[KEY_SPACE] = 0; }
+			if (wParam == VK_ESCAPE) { keys[KEY_ESC] = 0; }
 			return 0;
 		}
 	}
