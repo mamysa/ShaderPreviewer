@@ -1,7 +1,6 @@
 cmake_minimum_required (VERSION 3.1.3)
 project (ShaderPreviewV2)
 
-set (SDL_ENABLED FALSE)
 set (SOURCE_FILES 
 	${PROJECT_SOURCE_DIR}/src/main.cpp
 	${PROJECT_SOURCE_DIR}/src/ShaderWatcher.cpp
@@ -9,19 +8,9 @@ set (SOURCE_FILES
 	${PROJECT_SOURCE_DIR}/src/opengl/Mesh.cpp
 	${PROJECT_SOURCE_DIR}/src/utils/Math.cpp
 )
-
-if (SDL_ENABLED)
-	add_definitions(-DSDL_ENABLED)
-	add_executable(ShaderPreviewV2 ${SOURCE_FILES})
-	include_directories(${PROJECT_SOURCE_DIR}/libs/SDL2-2.0.5/include/)
-	target_link_libraries(ShaderPreviewV2 ${PROJECT_SOURCE_DIR}/libs/SDL2-2.0.5/lib/x64/SDL2main.lib)
-	target_link_libraries(ShaderPreviewV2 ${PROJECT_SOURCE_DIR}/libs/SDL2-2.0.5/lib/x64/SDL2.lib)
-else()
 	add_executable(ShaderPreviewV2 WIN32 ${SOURCE_FILES} )
-endif()
 
 include_directories(${PROJECT_SOURCE_DIR}/libs/glew2.0.0/include/)
-include_directories(${PROJECT_SOURCE_DIR}/libs/glm/glm)
 find_package(OPENGL REQUIRED)
 include_directories(${OPENGL_INCLUDE_DIRS})
 

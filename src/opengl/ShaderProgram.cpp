@@ -1,8 +1,8 @@
 #include "ShaderProgram.h"
 #include <iostream>
-#include "ext.hpp"
 #define ERRORMESG_BUF_LENGTH 1024
 #include "utils/Math.h"
+#include <cassert>
 
 ShaderProgram::ShaderProgram(void) :
 m_vertshaderID(0),
@@ -72,21 +72,6 @@ void ShaderProgram::use(int id) const {
 	glUseProgram(p);
 }
 
-void ShaderProgram::uniform(const char *str, const glm::mat4& n) const {
-	GLuint uniform = glGetUniformLocation(m_programID, str);
-	glProgramUniformMatrix4fv(m_programID, uniform, 1, GL_FALSE, glm::value_ptr(n));
-}
-
-void ShaderProgram::uniform(const char *str, const glm::vec4& n) const {
-	GLuint uniform = glGetUniformLocation(m_programID, str);
-	glProgramUniform4fv(m_programID, uniform, 1, glm::value_ptr(n));
-}
-
-void ShaderProgram::uniform(const char *str, const glm::vec3& n) const {
-	GLuint uniform = glGetUniformLocation(m_programID, str);
-	glProgramUniform3fv(m_programID, uniform, 1, glm::value_ptr(n));
-}
-
 void ShaderProgram::uniform(const char *str, const Matrix3& n) const {
 	GLuint uniform = glGetUniformLocation(m_programID, str);
 	glProgramUniformMatrix3fv(m_programID, uniform, 1, GL_FALSE, n.getBuffer());
@@ -96,13 +81,6 @@ void ShaderProgram::uniform(const char *str, const Vector3& n) const {
 	GLuint uniform = glGetUniformLocation(m_programID, str);
 	float buf[3] = {n.x, n.y, n.z};
 	glProgramUniform3fv(m_programID, uniform, 1, buf);
-}
-
-
-
-void ShaderProgram::uniform(const char *str, const glm::vec2& n) const {
-	GLuint uniform = glGetUniformLocation(m_programID, str);
-	glProgramUniform2fv(m_programID, uniform, 1, glm::value_ptr(n));
 }
 
 void ShaderProgram::uniform(const char *str, float n) const {
