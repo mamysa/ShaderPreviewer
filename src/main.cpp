@@ -14,8 +14,6 @@
 #include "ShaderWatcher.h"
 #include <chrono>
 
-#define W 800 
-#define H 600 
 ShaderWatcher shaderWatcher;
 ShaderProgram *currentProgram = nullptr;
 GLMesh *quad = nullptr;
@@ -30,6 +28,7 @@ const char *DEFAULT_VERT_SHADER = R"(
 
 Vector3 mouseCoordinates;
 Vector3 cameraPosition; 
+Vector3 windowSize = Vector3(800, 600, 0);
 unsigned ticks = 0;
 
 #ifdef SDL_ENABLED
@@ -183,7 +182,6 @@ static void handleInput(void) {
 		ticks = 0;
 	}
 
-
 	if (g_VALIDGLSTATE) {
 		Matrix3 a = rotateY(mouseCoordinates.x) * rotateX(mouseCoordinates.y);
 		Vector3 rd = (a * Vector3(0.0, 0.0, 1.0)).normalize();
@@ -198,8 +196,6 @@ static void handleInput(void) {
 	}
 }
 
-
-
 LRESULT CALLBACK WindowProc(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam);
 
 HGLRC glContext;
@@ -208,7 +204,7 @@ bool STAGE_ONE_SUCCESS = false;
 bool STAGE2_SUCCESS = false;
 
 void drawQuad(void) {
-	glm::vec2 resolution = glm::vec2((float)W, (float)H);
+	glm::vec2 resolution = glm::vec2(windowSize.x, windowSize.y);
 	quad->setupAttributes(*currentProgram);
 	float tickf = ((float)ticks) * 0.1;
 	currentProgram->uniform("resolution", resolution);
@@ -259,17 +255,21 @@ int WINAPI wWinMain(HINSTANCE hInstance, HINSTANCE, PWSTR pCmdLine, int nCmdShow
 
 	quad = createQuad();
 
+	BOOL console = AllocConsole();
+	freopen("CONOUT$", "w", stdout);
+
 	ShowWindow(hwnd, nCmdShow);
 	
-	
-
 	// Run the message loop.
 	RUNNING =true;
 	MSG msg = { };
 	HDC deviceContext = GetDC(hwnd);
 	assert(glGetError() == GL_NO_ERROR);
 	for (;;) {
-		
+		if(!RUNNING) {
+			break;
+		}
+		assert(glGetError() == GL_NO_ERROR);
 		auto frameStart = std::chrono::high_resolution_clock::now();
 
 		glClearColor(1.0, 1.0, 0.0, 1.0);
@@ -278,7 +278,8 @@ int WINAPI wWinMain(HINSTANCE hInstance, HINSTANCE, PWSTR pCmdLine, int nCmdShow
 			g_VALIDGLSTATE = shaderWatcher.watch();
 			handleInput();
 
-			if (g_VALIDGLSTATE && RUNNING) {
+			if (g_VALIDGLSTATE) {
+				glViewport(0,0,windowSize.x,windowSize.y);
 				currentProgram->use();
 				drawQuad();
 				currentProgram->use(0);
@@ -286,7 +287,6 @@ int WINAPI wWinMain(HINSTANCE hInstance, HINSTANCE, PWSTR pCmdLine, int nCmdShow
 
 			SwapBuffers(deviceContext);	
 			glFinish();
-
 		}
 
 		auto frameEnd = std::chrono::high_resolution_clock::now();
@@ -299,10 +299,6 @@ int WINAPI wWinMain(HINSTANCE hInstance, HINSTANCE, PWSTR pCmdLine, int nCmdShow
 
 		assert(glGetError() == GL_NO_ERROR);
 
-		if(!RUNNING) {
-			shaderWatcher.clear();
-			break;
-		}
 		while (PeekMessage(&msg, NULL, 0, 0, PM_REMOVE)) {
 			TranslateMessage(&msg);
 			DispatchMessage(&msg);
@@ -312,7 +308,7 @@ int WINAPI wWinMain(HINSTANCE hInstance, HINSTANCE, PWSTR pCmdLine, int nCmdShow
 	//currentProgram->use(0);
 	//currentProgram->~ShaderProgram();
 	
-
+	shaderWatcher.clear();
 	DestroyWindow(hwnd);
 	return 0;
 }
@@ -387,8 +383,6 @@ LRESULT CALLBACK WindowProc(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
 		}
 		case WM_DESTROY: {
 			RUNNING = false;
-
-			// TODO error when trying to make current here..
 			wglMakeCurrent(GetDC(hwnd), NULL);
 			wglDeleteContext(glContext);
 			PostQuitMessage(0);
@@ -422,6 +416,12 @@ LRESULT CALLBACK WindowProc(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
 			if (wParam == 'C')  { keys[KEY_C] = 0; }
 			if (wParam == VK_SPACE)  { keys[KEY_SPACE] = 0; }
 			if (wParam == VK_ESCAPE) { keys[KEY_ESC] = 0; }
+			return 0;
+		}
+		
+		case WM_SIZE: {
+			windowSize.x = LOWORD(lParam);
+			windowSize.y = HIWORD(lParam);
 			return 0;
 		}
 	}
