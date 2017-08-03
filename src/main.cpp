@@ -7,6 +7,7 @@
 #include "opengl/ShaderProgram.h"
 #include "opengl/Mesh.h"
 #include "ShaderWatcher.h"
+#include "Input.h"
 #include <chrono>
 #include <cassert>
 #include <windows.h>
@@ -26,23 +27,8 @@ const char *DEFAULT_VERT_SHADER = R"(
 Vector3 mouseCoordinates;
 Vector3 cameraPosition; 
 Vector3 windowSize = Vector3(800, 600, 0);
+Vector3 windowResizeEvent = Vector3(800, 600, 0);
 unsigned ticks = 0;
-
-enum KeyboardMap {
-	KEY_LEFT = 0,
-	KEY_RIGHT,
-	KEY_UP,
-	KEY_DOWN,
-	KEY_SPACE,
-	KEY_C,
-	KEY_W, 
-	KEY_S,
-	KEY_A,
-	KEY_D,
-	KEY_ESC,
-};
-
-bool keys[11] = {0};
 
 static void handleInput(void) {
 	const float rotXStep = 0.01f;
@@ -128,7 +114,7 @@ int WINAPI wWinMain(HINSTANCE hInstance, HINSTANCE, PWSTR pCmdLine, int nCmdShow
 		return 2;	
 	}
 
-	const char *shaderPath = "D://Projects/shaders/tube1.frag";
+	const char *shaderPath = "D://Projects/ShaderPreviewV2/shaders/sdf1.frag";
 	ShaderProgram myShaderProgram;
 	myShaderProgram.addShader(DEFAULT_VERT_SHADER, GL_VERTEX_SHADER);
 	myShaderProgram.addShader(readTextFile(shaderPath).c_str(), GL_FRAGMENT_SHADER);
@@ -163,6 +149,11 @@ int WINAPI wWinMain(HINSTANCE hInstance, HINSTANCE, PWSTR pCmdLine, int nCmdShow
 		if (RUNNING) {
 			g_VALIDGLSTATE = shaderWatcher.watch();
 			handleInput();
+
+			if (windowSize.x != windowResizeEvent.x || windowSize.y != windowResizeEvent.y) {
+				std::cout << "We should resize textures...!\n";
+				windowSize = windowResizeEvent;
+			}
 
 			if (g_VALIDGLSTATE) {
 				glViewport(0,0,windowSize.x,windowSize.y);
@@ -276,38 +267,18 @@ LRESULT CALLBACK WindowProc(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
 		}
 
 		case WM_KEYDOWN: {
-			if (wParam == VK_LEFT)   { keys[KEY_LEFT]  = 1; }
-			if (wParam == VK_RIGHT)  { keys[KEY_RIGHT] = 1; }
-			if (wParam == VK_UP)     { keys[KEY_UP] = 1; }
-			if (wParam == VK_DOWN)   { keys[KEY_DOWN] = 1; }
-			if (wParam == 'W')  { keys[KEY_W] = 1; }
-			if (wParam == 'S')  { keys[KEY_S] = 1; }
-			if (wParam == 'A')  { keys[KEY_A] = 1; }
-			if (wParam == 'D')  { keys[KEY_D] = 1; }
-			if (wParam == 'C')  { keys[KEY_C] = 1; }
-			if (wParam == VK_SPACE)  { keys[KEY_SPACE] = 1; }
-			if (wParam == VK_ESCAPE) { keys[KEY_ESC] = 1; }
+			setKeyState(wParam, true);
 			return 0;
 		}
 
 		case WM_KEYUP: {
-			if (wParam == VK_LEFT)   { keys[KEY_LEFT]  = 0; }
-			if (wParam == VK_RIGHT)  { keys[KEY_RIGHT] = 0; }
-			if (wParam == VK_UP)     { keys[KEY_UP] = 0; }
-			if (wParam == VK_DOWN)   { keys[KEY_DOWN] = 0; }
-			if (wParam == 'W')  { keys[KEY_W] = 0; }
-			if (wParam == 'S')  { keys[KEY_S] = 0; }
-			if (wParam == 'A')  { keys[KEY_A] = 0; }
-			if (wParam == 'D')  { keys[KEY_D] = 0; }
-			if (wParam == 'C')  { keys[KEY_C] = 0; }
-			if (wParam == VK_SPACE)  { keys[KEY_SPACE] = 0; }
-			if (wParam == VK_ESCAPE) { keys[KEY_ESC] = 0; }
+			setKeyState(wParam, false);
 			return 0;
 		}
 		
 		case WM_SIZE: {
-			windowSize.x = LOWORD(lParam);
-			windowSize.y = HIWORD(lParam);
+			windowResizeEvent.x = LOWORD(lParam);
+			windowResizeEvent.y = HIWORD(lParam);
 			return 0;
 		}
 	}
