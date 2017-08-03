@@ -1,73 +1,23 @@
-
-#include <iostream>
-
 #include "GL/glew.h"
 #include "GL/wglew.h"
 #include <GL/gl.h>
 #include "opengl/ShaderProgram.h"
 #include "opengl/Mesh.h"
 #include "ShaderWatcher.h"
+#include "utils/Math.h"
 #include "Input.h"
+#include "Renderer.h"
 #include <chrono>
-#include <cassert>
 #include <windows.h>
+#include <iostream>
+#include <cassert>
 
 ShaderWatcher shaderWatcher;
-ShaderProgram *currentProgram = nullptr;
-GLMesh *quad = nullptr;
 bool g_VALIDGLSTATE = true;
 
-const char *DEFAULT_VERT_SHADER = R"(
-	#version 450
-	in vec4 position; in vec2 texCoord;
-	out vec2 fragTexCoord;
-	void main(void) { gl_Position = position; fragTexCoord = texCoord; }
-)";
 
-Vector3 mouseCoordinates;
-Vector3 cameraPosition; 
 Vector3 windowSize = Vector3(800, 600, 0);
 Vector3 windowResizeEvent = Vector3(800, 600, 0);
-unsigned ticks = 0;
-
-static void handleInput(void) {
-	const float rotXStep = 0.01f;
-	const float rotYStep = 0.01f;
-	const float movStep  = 0.06f;
-
-	float movingForward  = 0.0f;
-	float movingSideways = 0.0f;
-	float movingUp       = 0.0f;
-
-	if(keys[KEY_LEFT])  { mouseCoordinates.x -= rotXStep; }
-	if(keys[KEY_RIGHT]) { mouseCoordinates.x += rotXStep; }
-	if(keys[KEY_UP])    { mouseCoordinates.y -= rotYStep; }
-	if(keys[KEY_DOWN])  { mouseCoordinates.y += rotYStep; }
-	if(keys[KEY_W])     { movingForward  += movStep;  }
-	if(keys[KEY_S])     { movingForward  -= movStep;  }
-	if(keys[KEY_D])     { movingSideways += movStep;  }
-	if(keys[KEY_A])     { movingSideways -= movStep;  }
-	if(keys[KEY_C])     { movingUp -= movStep; }
-	if(keys[KEY_SPACE]) { movingUp += movStep; }
-	if(keys[KEY_ESC]) {
-		cameraPosition = Vector3();
-		mouseCoordinates = Vector3();
-		ticks = 0;
-	}
-
-	if (g_VALIDGLSTATE) {
-		Matrix3 a = rotateY(mouseCoordinates.x) * rotateX(mouseCoordinates.y);
-		Vector3 rd = (a * Vector3(0.0, 0.0, 1.0)).normalize();
-		Vector3 right = (a * Vector3(1.0, 0.0, 0.0)).normalize();
-		Vector3 up = (a * Vector3(0.0, 1.0, 0.0)).normalize();
-		cameraPosition = cameraPosition + rd * movingForward;
-		cameraPosition = cameraPosition + right * movingSideways;
-		cameraPosition = cameraPosition + up * movingUp;
-
-		currentProgram->uniform("viewMatrix", a);
-		currentProgram->uniform("viewPosition", cameraPosition);
-	}
-}
 
 LRESULT CALLBACK WindowProc(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam);
 
@@ -76,17 +26,7 @@ bool RUNNING = true;
 bool STAGE_ONE_SUCCESS = false;
 bool STAGE2_SUCCESS = false;
 
-void drawQuad(void) {
-	quad->setupAttributes(*currentProgram);
-	float tickf = ((float)ticks) * 0.1;
-	currentProgram->uniform("resolution", windowSize);
-	currentProgram->uniform("iGlobalTime", tickf);
-	quad->bind();
-	quad->draw();
-	quad->bind(0);
-}
 
-#include "utils/Math.h"
 
 int WINAPI wWinMain(HINSTANCE hInstance, HINSTANCE, PWSTR pCmdLine, int nCmdShow) {
 	// Register the window class.
@@ -113,19 +53,10 @@ int WINAPI wWinMain(HINSTANCE hInstance, HINSTANCE, PWSTR pCmdLine, int nCmdShow
 	if (hwnd == NULL || !STAGE2_SUCCESS) { 
 		return 2;	
 	}
-
-	const char *shaderPath = "D://Projects/ShaderPreviewV2/shaders/sdf1.frag";
-	ShaderProgram myShaderProgram;
-	myShaderProgram.addShader(DEFAULT_VERT_SHADER, GL_VERTEX_SHADER);
-	myShaderProgram.addShader(readTextFile(shaderPath).c_str(), GL_FRAGMENT_SHADER);
         
-	g_VALIDGLSTATE = myShaderProgram.link();
-	shaderWatcher.add(shaderPath, &myShaderProgram, GL_FRAGMENT_SHADER);
-	currentProgram = &myShaderProgram;
-	assert(glGetError() == GL_NO_ERROR);
 
 
-	quad = createQuad();
+	g_VALIDGLSTATE = initialize(shaderWatcher);
 
 	BOOL console = AllocConsole();
 	freopen("CONOUT$", "w", stdout);
@@ -136,12 +67,11 @@ int WINAPI wWinMain(HINSTANCE hInstance, HINSTANCE, PWSTR pCmdLine, int nCmdShow
 	RUNNING =true;
 	MSG msg = { };
 	HDC deviceContext = GetDC(hwnd);
-	assert(glGetError() == GL_NO_ERROR);
 	for (;;) {
 		if(!RUNNING) {
 			break;
 		}
-		assert(glGetError() == GL_NO_ERROR);
+
 		auto frameStart = std::chrono::high_resolution_clock::now();
 
 		glClearColor(1.0, 1.0, 0.0, 1.0);
@@ -153,17 +83,16 @@ int WINAPI wWinMain(HINSTANCE hInstance, HINSTANCE, PWSTR pCmdLine, int nCmdShow
 			if (windowSize.x != windowResizeEvent.x || windowSize.y != windowResizeEvent.y) {
 				std::cout << "We should resize textures...!\n";
 				windowSize = windowResizeEvent;
+				resizeTextures(windowResizeEvent.x, windowResizeEvent.y);
 			}
 
 			if (g_VALIDGLSTATE) {
-				glViewport(0,0,windowSize.x,windowSize.y);
-				currentProgram->use();
-				drawQuad();
-				currentProgram->use(0);
+				drawFrame();	
 			}
 
 			SwapBuffers(deviceContext);	
 			glFinish();
+			assert(glGetError() == GL_NO_ERROR);
 		}
 
 		auto frameEnd = std::chrono::high_resolution_clock::now();
@@ -172,9 +101,7 @@ int WINAPI wWinMain(HINSTANCE hInstance, HINSTANCE, PWSTR pCmdLine, int nCmdShow
 		std::string timestr = std::to_string((int)floor(fps)) + " FPS\n";
 
 		SetWindowText(hwnd, timestr.c_str());
-		ticks++;
 
-		assert(glGetError() == GL_NO_ERROR);
 
 		while (PeekMessage(&msg, NULL, 0, 0, PM_REMOVE)) {
 			TranslateMessage(&msg);
@@ -182,10 +109,7 @@ int WINAPI wWinMain(HINSTANCE hInstance, HINSTANCE, PWSTR pCmdLine, int nCmdShow
 		}
 	}
 
-	//currentProgram->use(0);
-	//currentProgram->~ShaderProgram();
-	
-	shaderWatcher.clear();
+	cleanup(shaderWatcher);
 	DestroyWindow(hwnd);
 	return 0;
 }

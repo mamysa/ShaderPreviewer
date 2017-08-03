@@ -4,6 +4,8 @@ project (ShaderPreviewV2)
 set (SOURCE_FILES 
 	${PROJECT_SOURCE_DIR}/src/main.cpp
 	${PROJECT_SOURCE_DIR}/src/ShaderWatcher.cpp
+	${PROJECT_SOURCE_DIR}/src/Renderer.cpp
+	${PROJECT_SOURCE_DIR}/src/Input.cpp
 	${PROJECT_SOURCE_DIR}/src/opengl/ShaderProgram.cpp
 	${PROJECT_SOURCE_DIR}/src/opengl/Mesh.cpp
 	${PROJECT_SOURCE_DIR}/src/utils/Math.cpp
