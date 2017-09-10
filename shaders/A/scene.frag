@@ -739,10 +739,43 @@ float cro1(vec3 p, float a) {
 }
 
 
+float tri2(vec3 p, float s) {
+    pRepeatPolar(p.xz, 4.0);
+    float a = sdBox(p, vec3(s,20000.0,s));
+    p.x -= s; opMod1(p.z, 0.25);
+    float b = sdCylinder(p.xyz, vec3(0.0, 0.0, 0.10));
+    return opAdd(a, b);
+}
+
+
+float hex(vec3 p, float s, float h) {
+    vec3 p1 = p;
+    pRepeatPolar(p.xz, 6.0);
+    p.x -= 0.0;
+    float a = sdBox(p, vec3(s, h + 0.1, s));
+    return a;//* pow(1.25, -8.0);
+}
+
+float pModInterval1(inout float p, float size, float start, float stop) {
+	float halfsize = size*0.5;
+	float c = floor((p + halfsize)/size);
+	p = mod(p+halfsize, size) - halfsize;
+	if (c > stop) { //yes, this might not be the best thing numerically.
+		p += size*(c - stop);
+		c = stop;
+	}
+	if (c <start) {
+		p += size*(c - start);
+		c = start;
+	}
+	return c;
+}
+
+
 
 vec4 map(vec3 p, vec3 ro, out int mattype) {
 
-    vec4 f = vec4(MAXT, vec3(0.6));
+    vec4 f = vec4(1.0, vec3(0.6));
     #if 0
     opMod1(p.y, 1.0);
 
@@ -788,337 +821,104 @@ vec4 map(vec3 p, vec3 ro, out int mattype) {
     //float b = sdSpheroid(p, vec3(1.0));
     //f.x = opAddSmooth(a, b, 8.7);
     #endif
+    pReflect(p, vec4(0,-1,0,0));
+    p.y += 5.0;
 
-    float S = 1.2;     
-    float Scum = 0;
-    int N = 3;
-    for (int i = 0; i < 3; i++) {
-       p = rotateZ(0.5) * p;
-       p = abs(p);
-       p.xy += step(p.x, p.y)*(p.yx - p.xy);
-       p.xz += step(p.x, p.z)*(p.zx - p.xz);
-       p.yz += step(p.y, p.z)*(p.zy - p.yz);
-       p = rotateZ(0.1) * p;
-       p.z = S*p.z;
-       p += vec3(-0.5, 0.4, 1.0);
-       Scum += S;
-       S *= 0.1;
-
-    }
-
-    f.x = sdBox(p, vec3(1.0)) * 0.1;
+    vec3 p1 = p;
+    opMod1(p1.x, 2.5);
+    opMod1(p1.z, 4.5);
 
 
-    return f;
+    vec3 p2 = p;
+    p2.x -= 1.25;
+    p2.z -= 2.25;
+    opMod1(p2.x, 2.5);
+    opMod1(p2.z, 4.5);
+
+
+    vec3 p3 = p;
+    pRepeatPolar(p3.xz, 6.0);
+
+    p3.x -= 5.0;
+    //p3 = rotateY(PI*0.25) * p;
+
+   
+
+    //p.x -= 0.0;
+    float a = sdHexPrism(p1.zxy, vec2(1.2, 1.0));
+    float b = sdHexPrism(p2.zxy, vec2(1.2, 1.0));
+
+
+    float c = sdHexPrism(p1.zxy, vec2(0.85, 2.0));
+    float d = sdHexPrism(p2.zxy, vec2(0.85, 2.0));
+    f.x = opAdd(a,b);//a *  pow(1.25, -5);
+    float e = opAdd(c,d);//a *  pow(1.25, -5);
+
+    f.x = opSubtract(e,f.x);//a *  pow(1.25, -5);
+
+
+
+
+
+    float bb1 =  sdHexPrism(p.zxy, vec2(5.0, 9.1));
+    float bb2 =  sdHexPrism(p3.zxy, vec2(1.25, 9.1));
+    f.x = opSubtract(-bb1, f.x);
+    f.x = opSubtract( bb2, f.x);
+
+
+    
+    float ftime = iGlobalTime * 0.25;
+
+    //p.y -= 1.0;
+    //p.y -= mod(ftime, 30.0) * 0.15 ;
+
+    //p.x += sin(p.y + ftime) * 1.2;
+    //p.z += sin(p.y + ftime) * 0.8;
+    //p.x += sin( 3.0*p.x  + 9.0*p.y - 0.0*ftime) * 0.75;
+    //p.y += sin(p.z + iGlobalTime);
+    //float blob = sdSpheroid(p, vec3(1.0)) * 0.2;
+
+    //blob += sin(p.x*10.0)* 0.01;
+    //blob += sin(p.y*12.0)* 0.01;
+    //f.x = opAdd(blob, f.x);
+
+
+    //float d = hex(p3, 1.35, 4.0);
+
+    //f.x = opSubtract(d, f.x);
+
+
+
+
+    
+    return f;//*pow(1.4, -12);
 }
-
-
-
-#if 0
-vec4 map(vec3 p, vec3 ro, out int mattype) {
-    vec4 f = vec4(MAXT, vec3(0.6));
-
-
-    vec3 pr = p;
-    pReflect(pr, vec4(1.0, 0.0, 0.0, 0.0));
-    pr.x -= 12.0;
-
-
-
-
-    // brick wall
-    vec3 p1 = pr;
-    vec3 p2 = pr;
-    p2.yz -= 1.0;
-    opMod1(p1.z, 2.0);
-    opMod1(p1.y, 2.0);
-    opMod1(p2.z, 2.0);
-    opMod1(p2.y, 2.0);
-
-    float a = udRoundBox(p1, vec3(0.5, 0.430, 0.93), 0.05);    
-    float b = udRoundBox(p2, vec3(0.5, 0.430, 0.93), 0.05);    
-    f.x = opAdd(a, b);
-
-    //  trim
-    vec3 p3 = pr;
-    p3.x += 0.75;
-    p3.y += 0.25*0.5;
-    opMod1(p3.y,0.25);
-
-
-
-    vec3 p4 = pr;
-    //p4.y -= 0.52;
-    opMod1(p4.y,4.0);
-
-
-
-    float zz = sdBox(p4, vec3(4.0, 0.45, 90000.0));
-    float c = sdCylinder(p3.xzy, vec3(0.0, 0.0, 0.10));
-    float g = sdPlane(pr, vec4(-1.0, 0.0, 0.0, 0.75));
-    c= opAdd(g, c);
-    c = opSubtract(-zz, c);
-
-
-    //c = opIntersect(c, sdBox(p, vec3(4.0)));
-    f.x = opAdd(c, f.x);
-
-
-
-
-    // ver.tical bar trims
-    pr += 1.0;
-    vec3 p5 = pr;
-    vec3 p6 = pr;
-    p6.z += 0.25*0.5;
-    opMod1(p5.z, 0.25);
-    opMod1(p6.z, 25.0);
-
-
-    float c1 = sdCylinder(p5.xyz, vec3(0.0, 0.0, 0.10));
-    float bb2 = sdBox(p6, vec3(12.0, 9000.0, 10.25));
-
-    vec3 p7 = pr;
-    p7.z -= 25.0 * 0.5;
-    opMod1(p7.z, 25.0);
-    float bb3 = sdBox(p7, vec3(12.0, 9000.0, 1.15));
-
-
-
-    pr.x -= 0.75; 
-    float g2 = sdPlane(pr, vec4(-1.0, 0.0, 0.0, 0.75));
-    
-    vec3 p8 = pr;
-    p8.z -= 25.0 * 0.5;
-    p8.y += 1.0;
-    p8.x -= 0.45;
-    opMod1(p8.y,1.0);
-    opMod1(p8.z, 25.0);
-
-
-    float t1 = udRoundBox(rotateY(0.2)*p8, vec3(0.9, 0.41, 1.0), 0.075);
-    float t2 = udRoundBox(rotateY(-0.2)*p8, vec3(0.9, 0.41, 1.0), 0.075);
-
-
-
-    c1 = opAdd(g2, c1);
-    c1 = opSubtract(bb2, c1);
-    f.x = opAdd(c1, f.x);
-    
-    f.x = opSubtract(bb3, f.x);
-    f.x = opAdd(f.x, t1);
-    f.x = opAdd(f.x, t2);
-
-
-
-    // \_/ shaped trim
-    vec3 p9 = pr;
-    p9.z -= 25.0 * 0.5;
-    p9.y += 1.0;
-    p9.x += 0.5;
-    opMod1(p9.y, 8.0);
-    opMod1(p9.z, 25.0);
-
-    t1 = udRoundBox(rotateY(PI*0.25)*(p9+vec3(-0.1,0.0,-2.0)), vec3(0.9, 0.41, 1.0), 0.075);
-    t2 = udRoundBox(rotateY(PI*0.25)*(p9+vec3(-0.1,0.0,2.0)), vec3(0.9, 0.41, 1.0), 0.075);
-
-    float t3 = udRoundBox(p9, vec3(0.9, 0.41, 2.0), 0.075);
-
-    f.x = opAdd(f.x, t1);
-    f.x = opAdd(f.x, t2);
-    f.x = opAdd(f.x, t3);
-
-
-
-    f.x = opAdd(f.x, powercore_podium(p, 9.0, 2.0));
-
-    vec3 p0 = p;
-    pRepeatPolar(p0.xz, 6.0);
-    p0.x -= 2.0;
-
-    //b = sdBox(p0, vec3(25.0, 0.5, 1.0));
-    //f.x  = opAdd(f.x,b);
-
-
-    return f; 
-
-
 
 
 
 
 #if 0 
-     this is a pipe test...
-    float c = cos(0.012*p.y);
-    float s = sin(0.012*p.y);
-    mat2  m = mat2(c,-s,s,c);
-    vec3  q = vec3(m*p.xy,p.z);
-    q.x += sin(q.y) * 0.2;
-    q.z += sin(q.y) * 0.2;
+this is a pipe test...
+float c = cos(0.012*p.y);
+float s = sin(0.012*p.y);
+mat2  m = mat2(c,-s,s,c);
+vec3  q = vec3(m*p.xy,p.z);
+q.x += sin(q.y) * 0.2;
+q.z += sin(q.y) * 0.2;
 
-    f.x = sdCylinder(q, vec3(0.0, 0.0, 1.0));
-    float z = (sin(q.y*6.0)*0.5+0.5)*2.0;
-    f.x += (floor(z) + pow(fract(z), 40.0) - 1.0)  * 0.15;
-    f.x *= 0.25;
-    #endif
+f.x = sdCylinder(q, vec3(0.0, 0.0, 1.0));
+float z = (sin(q.y*6.0)*0.5+0.5)*2.0;
+f.x += (floor(z) + pow(fract(z), 40.0) - 1.0)  * 0.15;
+f.x *= 0.25;
+#endif
 
 
 
 
     
-    //return f;
-}
-#endif
 
 
 
-
-#if 0
-vec4 map(vec3 p, vec3 ro, out int mattype) {
-    vec4 f = vec4(MAXT); 
-
-    vec3 pp = p;
-
-    pRepeatPolar(p.xz, 6.0);
-    p.x -= 15.0;
-
-
-    vec3 p1 = p;
-    vec3 p2 = p;
-    p2.yz -= 1.0;
-    opMod1(p1.z, 2.0);
-    opMod1(p1.y, 2.0);
-    opMod1(p2.z, 2.0);
-    opMod1(p2.y, 2.0);
-
-
-
-    float a = udRoundBox(p1, vec3(0.5, 0.430, 0.93), 0.05);    
-    float b = udRoundBox(p2, vec3(0.5, 0.430, 0.93), 0.05);    
-    f.x = opAdd(a, b);
-
-
-    //  horizontal trim
-    vec3 p3 = p;
-    p3.x += 0.75;
-    p3.y += 0.25*0.5;
-    opMod1(p3.y,0.25);
-
-    vec3 p4 = p;
-    //p4.y -= 0.52;
-    opMod1(p4.y,4.0);
-
-
-
-    float zz = sdBox(p4, vec3(4.0, 0.45, 90000.0));
-    float c = sdCylinder(p3.xzy, vec3(0.0, 0.0, 0.10));
-    float g = sdPlane(p, vec4(-1.0, 0.0, 0.0, 0.75));
-    c= opAdd(g, c);
-    c = opSubtract(-zz, c);
-
-
-    //c = opIntersect(c, sdBox(p, vec3(4.0)));
-    f.x = opAdd(c, f.x);
-
-
-
-    // vertical bar trims
-    vec3 p5 = pp;
-
-    p5 = rotateY(PI*0.5)*pp;
-    pRepeatPolar(p5.xz, 6);
-    p5.x -= 14.25;
-    vec3 p6 = p5;
-
-    opMod1(p5.z, 0.25);
-    p6.z += 0.25*0.5;
-    p6.x -= 0.8;
-    opMod1(p6.z, 25.0);
-
-
-
-    float c1 = sdCylinder(p5.xyz, vec3(0.0, 0.0, 0.10));
-    float bb2 = sdBox(p6, vec3(4.0, 9000.0, 1.75));
-    float bb3 = sdBox(p6, vec3(4.0, 9000.0, 0.75));
-    float bw = sdPlane(p6, vec4(-1.0, 0.0, 0.0, 0.75));
-
-    c1 = opAdd(c1, bw);
-
-    c1 = opSubtract(-bb2, c1);
-    c1 = opSubtract( bb3, c1);
-
-
-
-    vec3 p8 = pp;
-    p8 = rotateY(PI*0.5)*pp;
-    pRepeatPolar(p8.xz, 6);
-    p8.x -= 15.5;
-    p8.z += 0.1;
-    //p8.z -= 25.0 * 0.5;
-    //p8.y += 1.0;
-    opMod1(p8.y,1.0);
-    opMod1(p8.z, 25.0);
-
-    float t1 = udRoundBox(rotateY(0.2)*p8, vec3(0.9, 0.41, 0.5), 0.075);
-    float t2 = udRoundBox(rotateY(-0.2)*p8, vec3(0.9, 0.41, 0.5), 0.075);
-    c1 = opAdd(c1, t1);
-    c1 = opAdd(c1, t2);
-
-
-    f.x = opAdd(c1, f.x) ; 
-     
-
-    // \_/ shaped trims...
-
-    vec3 p9 = rotateY(PI*0.5)*pp;
-    pRepeatPolar(p9.xz, 6);
-
-    //p9.z -= 25.0 * 0.5;
-    p9.y += 2.0;
-    p9.x -= 14.5;
-    opMod1(p9.y, 8.0);
-    opMod1(p9.z, 25.0);
-
-    float scale = 0.41;
-    float offst = -0.1;
-
-    for (int i = 0; i < 2; i++) {
-        t1 = udRoundBox(rotateY(PI*0.25)*(p9+vec3(offst,0.0,-2.0)), vec3(0.9, scale, 1.0), 0.075);
-        t2 = udRoundBox(rotateY(PI*0.25)*(p9+vec3(offst,0.0,2.0)), vec3(0.9, scale, 1.0), 0.075);
-        float t3 = udRoundBox(p9+vec3(offst,0.0,0.0), vec3(0.9, scale, 2.0), 0.075);
-        f.x = opAdd(f.x, t1);
-        f.x = opAdd(f.x, t2);
-        f.x = opAdd(f.x, t3);
-        
-        scale *= 0.75;
-        offst += 0.3;
-    }
-
-
-
-    #if 0
-    f.x = powercore_podium(p, 2.0, 2.0);
-    f.x = opAdd(f.x, powercore_podium(p+vec3(0.0,4.0,0.0), 2.3, 2.0));
-    f.x = opAdd(f.x, powercore_podium(p+vec3(0.0,8.0,0.0), 2.6, 2.0));
-
-
-    pRepeatPolar(p.xz, 5.0);
-    f.x = opSubtract(sdBox(p, vec3(1.60, 10.0, 2.0)), f.x);
-    #endif
-
-    return f; 
-}
-#endif
-
-
-
-
-vec4 fogmap(vec3 p) {
-    p.x = p.x + iGlobalTime*0.1;
-    p.z = p.z + sin(iGlobalTime*0.2)*0.2;
-    float f = fbm(p*0.4+fbm(p*1.5)) * 1.0; // stained metal ??
-    return vec4(f, vec3(1.0));
-}
 
 
 vec3 sky(vec3 ro, vec3 rd) {
@@ -1156,40 +956,6 @@ struct TraceResult trace(vec3 ro, vec3 rd) {
     traceResult.rayt = t;
     return traceResult;
 }
-
-float  calcCloudDensity(vec3 ro, vec3 rd, float maxt) {
-    const int numsteps = 25;
-    float a = 0.0;
-    int t = 1;
-    for (; t <= numsteps; t++) {
-        float rt = 0.30*float(t); 
-        if (rt>maxt) {
-            break;
-        }
-        float d = fogmap(ro+rt*rd).x;
-        a += abs( min(d, 0.0) );
-    }
-    return clamp(a, 0.0, 10.0);
-    #if 0
-    float t = 0.02;
-    float tmax = MAXT; 
-    int mattype;
-
-    float a = 0.0;
-    for (; t < MAXT; ) {
-        vec3 rp = ro + rd * t;
-        vec4 tr = map(rp, mattype);
-        float d = fogmap(rp).x;
-        a += abs( min(d, 0.0) );
-        if (tr.x<0.001) {
-            break;
-        }
-        t += tr.x;
-    }
-    return a;
-    #endif
-}
-
 
 
 
