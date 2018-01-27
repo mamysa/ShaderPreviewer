@@ -32,15 +32,28 @@ HWND hwnd;
 bool setupBasicGLContext(void) {
 	HDC deviceContext = GetDC(hwnd);
 	PIXELFORMATDESCRIPTOR descriptor;
-	ZeroMemory(&descriptor, sizeof(PIXELFORMATDESCRIPTOR));
-	descriptor.nSize        = sizeof(PIXELFORMATDESCRIPTOR);
-	descriptor.nVersion     = 1;
-	descriptor.dwFlags      = PFD_DRAW_TO_WINDOW | PFD_SUPPORT_OPENGL | PFD_DOUBLEBUFFER;
-	descriptor.iPixelType   = PFD_TYPE_RGBA;
-	descriptor.cColorBits   = 32;
-	descriptor.cDepthBits   = 24;
-	descriptor.cStencilBits = 8;
-	descriptor.iLayerType   = PFD_MAIN_PLANE;
+
+
+	descriptor = {
+		sizeof(PIXELFORMATDESCRIPTOR),      // nsize
+		1,                                  // nversion
+		PFD_DRAW_TO_WINDOW | PFD_SUPPORT_OPENGL | PFD_DOUBLEBUFFER, // dwflags
+		PFD_TYPE_RGBA,                      // iPixelType
+		32, // cColorBits
+		0, 0, // cRedBits, cRedShift
+		0, 0, // cGreenBits, cGreenShift
+		0, 0, // cBlueBits, cBlueShift
+		0, 0, // cAlphaBits, cAlphaShift
+		0, 0, 0, 0, 0, // cAccumBits, Red, Green, blue, Alpha
+		24, // cDepthBits
+		8,  // cStencilBits
+		0,  // cAuxBuffers
+		PFD_MAIN_PLANE, // iLayerType
+		0, // bReserved
+		0, // dwLayerMask
+		0, //dwVisibleMask
+		0  // dwDamageMask
+	};
 
 	int pixelFormat = ChoosePixelFormat(deviceContext, &descriptor);
 	bool status = SetPixelFormat(deviceContext, pixelFormat, &descriptor);
@@ -106,6 +119,8 @@ int WINAPI wWinMain(HINSTANCE hInstance, HINSTANCE, PWSTR pCmdLine, int nCmdShow
 	}
 
 	wglMakeCurrent(GetDC(hwnd), glContext);
+	const GLubyte *version = glGetString(GL_VERSION);
+
 	if (glewInit() != GLEW_OK) {
 		return 2;
 	}
