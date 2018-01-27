@@ -26,6 +26,67 @@ bool RUNNING = true;
 bool STAGE_ONE_SUCCESS = false;
 bool STAGE2_SUCCESS = false;
 
+HWND hwnd;
+
+
+bool setupBasicGLContext(void) {
+	HDC deviceContext = GetDC(hwnd);
+	PIXELFORMATDESCRIPTOR descriptor;
+	ZeroMemory(&descriptor, sizeof(PIXELFORMATDESCRIPTOR));
+	descriptor.nSize        = sizeof(PIXELFORMATDESCRIPTOR);
+	descriptor.nVersion     = 1;
+	descriptor.dwFlags      = PFD_DRAW_TO_WINDOW | PFD_SUPPORT_OPENGL | PFD_DOUBLEBUFFER;
+	descriptor.iPixelType   = PFD_TYPE_RGBA;
+	descriptor.cColorBits   = 32;
+	descriptor.cDepthBits   = 24;
+	descriptor.cStencilBits = 8;
+	descriptor.iLayerType   = PFD_MAIN_PLANE;
+
+	int pixelFormat = ChoosePixelFormat(deviceContext, &descriptor);
+	bool status = SetPixelFormat(deviceContext, pixelFormat, &descriptor);
+	if (!status) { return false; }
+
+	glContext = wglCreateContext(deviceContext);
+	if (glContext == NULL) {
+		return false;
+	}
+	return true;
+}
+
+bool setupGL4Context() {
+	HDC deviceContext = GetDC(hwnd);
+	int  pixel_format_arb;
+	UINT pixel_formats_found;
+
+	const int pixel_attributes[] = {
+		WGL_DRAW_TO_WINDOW_ARB, GL_TRUE,
+		WGL_SUPPORT_OPENGL_ARB, GL_TRUE,
+		WGL_DOUBLE_BUFFER_ARB,  GL_TRUE,
+		WGL_PIXEL_TYPE_ARB,     WGL_TYPE_RGBA_ARB,
+		WGL_COLOR_BITS_ARB,     32,
+		WGL_DEPTH_BITS_ARB,     24,
+		WGL_STENCIL_BITS_ARB,   8,	
+		0
+	};
+
+	const int contextAttribs[] = {
+		WGL_CONTEXT_MAJOR_VERSION_ARB, 4,
+		WGL_CONTEXT_MINOR_VERSION_ARB, 4,
+		WGL_CONTEXT_PROFILE_MASK_ARB,  WGL_CONTEXT_CORE_PROFILE_BIT_ARB,
+		0
+	};
+
+	BOOL result = wglChoosePixelFormatARB(deviceContext, pixel_attributes, NULL, 1, &pixel_format_arb, &pixel_formats_found);
+	bool status = SetPixelFormat(deviceContext, pixel_format_arb, NULL);
+	assert(result && status);
+	glContext = wglCreateContextAttribsARB(deviceContext, NULL, contextAttribs);
+
+	if (!glContext) {
+		return false;	
+	}
+
+	return true;
+}
 
 
 int WINAPI wWinMain(HINSTANCE hInstance, HINSTANCE, PWSTR pCmdLine, int nCmdShow) {
@@ -38,28 +99,32 @@ int WINAPI wWinMain(HINSTANCE hInstance, HINSTANCE, PWSTR pCmdLine, int nCmdShow
 	wc.lpszClassName = CLASS_NAME;
 	RegisterClass(&wc);
 
-	HWND hwnd;
-
 	// Create the window and dummy context
 	hwnd = CreateWindow(CLASS_NAME, 0, WS_OVERLAPPEDWINDOW, 0, 0, 800, 600,  NULL, NULL, hInstance, NULL);
-	if (hwnd == NULL || !STAGE_ONE_SUCCESS) { 
-		return 0; 
+	if (hwnd == NULL || !setupBasicGLContext()) { 
+		return 1; 
 	}
+
+	wglMakeCurrent(GetDC(hwnd), glContext);
+	if (glewInit() != GLEW_OK) {
+		return 2;
+	}
+
+	wglDeleteContext(glContext);
 	glContext = NULL;
 	DestroyWindow(hwnd);
 
 
 	hwnd = CreateWindow(CLASS_NAME, 0, WS_OVERLAPPEDWINDOW, 0, 0, 800, 600,  NULL, NULL, hInstance, NULL);
-	if (hwnd == NULL || !STAGE2_SUCCESS) { 
-		return 2;	
+	if (hwnd == NULL || !setupGL4Context()) { 
+		return 3;	
 	}
-        
 
-
+	wglMakeCurrent(GetDC(hwnd), glContext);
 	g_VALIDGLSTATE = initialize(shaderWatcher);
 
 	BOOL console = AllocConsole();
-	freopen("CONOUT$", "w", stdout);
+	freopen("CONOUT$", "w", stdout); 
 
 	ShowWindow(hwnd, nCmdShow);
 	
@@ -67,6 +132,9 @@ int WINAPI wWinMain(HINSTANCE hInstance, HINSTANCE, PWSTR pCmdLine, int nCmdShow
 	RUNNING =true;
 	MSG msg = { };
 	HDC deviceContext = GetDC(hwnd);
+
+
+	//wglSwapIntervalEXT(0);
 	for (;;) {
 		if(!RUNNING) {
 			break;
@@ -110,6 +178,7 @@ int WINAPI wWinMain(HINSTANCE hInstance, HINSTANCE, PWSTR pCmdLine, int nCmdShow
 	}
 
 	cleanup(shaderWatcher);
+	wglDeleteContext(glContext);
 	DestroyWindow(hwnd);
 	return 0;
 }
@@ -117,75 +186,10 @@ int WINAPI wWinMain(HINSTANCE hInstance, HINSTANCE, PWSTR pCmdLine, int nCmdShow
 LRESULT CALLBACK WindowProc(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
 {
 	switch (uMsg) {
-		case WM_CREATE: { 
-			HDC deviceContext = GetDC(hwnd);
-
-			// create opengl4.0 context
-			if (STAGE_ONE_SUCCESS) {
-				int  pixel_format_arb;
-				UINT pixel_formats_found;
-
-				const int pixel_attributes[] = {
-					WGL_DRAW_TO_WINDOW_ARB, GL_TRUE,
-					WGL_SUPPORT_OPENGL_ARB, GL_TRUE,
-					WGL_DOUBLE_BUFFER_ARB,  GL_TRUE,
-					WGL_PIXEL_TYPE_ARB,     WGL_TYPE_RGBA_ARB,
-					WGL_COLOR_BITS_ARB,     32,
-					WGL_DEPTH_BITS_ARB,     24,
-					WGL_STENCIL_BITS_ARB,   8,	
-					0
-				};
-
-				const int contextAttribs[] = {
-					WGL_CONTEXT_MAJOR_VERSION_ARB, 4,
-					WGL_CONTEXT_MINOR_VERSION_ARB, 4,
-					WGL_CONTEXT_PROFILE_MASK_ARB,  WGL_CONTEXT_CORE_PROFILE_BIT_ARB,
-					0
-				};
-
-				BOOL result = wglChoosePixelFormatARB(deviceContext, pixel_attributes, NULL, 1, &pixel_format_arb, &pixel_formats_found);
-				bool status = SetPixelFormat(deviceContext, pixel_format_arb, NULL);
-				assert(result && status);
-				glContext = wglCreateContextAttribsARB(deviceContext, NULL, contextAttribs);
-
-				if (!glContext) {
-					return 0;	
-				}
-
-				wglMakeCurrent(deviceContext, glContext);
-				STAGE2_SUCCESS = true;
-				return 0;
-			}
-
-			// Initialize the basic OpenGL context and get function pointers...
-			if (!STAGE_ONE_SUCCESS) {
-				PIXELFORMATDESCRIPTOR descriptor;
-				ZeroMemory(&descriptor, sizeof(PIXELFORMATDESCRIPTOR));
-				descriptor.nSize        = sizeof(PIXELFORMATDESCRIPTOR);
-				descriptor.nVersion     = 1;
-				descriptor.dwFlags      = PFD_DRAW_TO_WINDOW | PFD_SUPPORT_OPENGL | PFD_DOUBLEBUFFER;
-				descriptor.iPixelType   = PFD_TYPE_RGBA;
-				descriptor.cColorBits   = 32;
-				descriptor.cDepthBits   = 24;
-				descriptor.cStencilBits = 8;
-				descriptor.iLayerType   = PFD_MAIN_PLANE;
-
-				int pixelFormat = ChoosePixelFormat(deviceContext, &descriptor);
-				bool status = SetPixelFormat(deviceContext, pixelFormat, &descriptor);
-				if (!status) { return 0 ; }
-
-				glContext = wglCreateContext(deviceContext);
-				wglMakeCurrent(deviceContext, glContext);
-				STAGE_ONE_SUCCESS = (glewInit() == GLEW_OK); 
-				return 0;
-			}
-
-			return 0;
-		}
 		case WM_DESTROY: {
 			RUNNING = false;
 			wglMakeCurrent(GetDC(hwnd), NULL);
-			wglDeleteContext(glContext);
+			//wglDeleteContext(glContext);
 			PostQuitMessage(0);
 			return 0;
 		}
