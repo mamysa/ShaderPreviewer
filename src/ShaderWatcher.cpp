@@ -64,14 +64,25 @@ void ShaderWatcher::clear(void) {
 	m_shaderList.clear();
 }
 
+#ifdef _WIN32
+static bool checkandUpdateTimestamp(ShaderInfo& info) {
+	FILETIME time; 
+	bool status = GetFileTime(info.shaderHandle, NULL, NULL, &time);
+	FILETIME *t = &info.lastUpdateTime;
+	if (status && ( time.dwHighDateTime > t->dwHighDateTime || 
+		            time.dwLowDateTime  > t->dwLowDateTime ) ) {
+		info.lastUpdateTime = time;
+		return true;
+	}
+
+	return false;
+}
+#endif
+
 bool ShaderWatcher::watch(void) {
-	FILETIME currentTime;
 	for (auto& n: m_shaderList) {
-		bool b = GetFileTime(n.shaderHandle, NULL, NULL, &currentTime);
-		if (currentTime.dwHighDateTime != n.lastUpdateTime.dwHighDateTime || 
-			currentTime.dwLowDateTime  != n.lastUpdateTime.dwLowDateTime) {
+		if (checkandUpdateTimestamp(n)) {
 			std::cout << "Updating " << n.pathToShader << "...\n";
-			n.lastUpdateTime = currentTime;
 			std::string shadersrc = readTextFile(n.pathToShader);
 			bool a = n.shaderProgram->addShader(shadersrc.c_str(), n.shaderType);
 			bool b = n.shaderProgram->link();
