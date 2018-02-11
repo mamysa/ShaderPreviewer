@@ -1,8 +1,7 @@
 #pragma once
 
-class ShaderWatcher;
-bool initialize(ShaderWatcher&);
+bool initialize();
 void resizeTextures(int, int);
 void drawFrame(void);
 void handleInput(void);
-void cleanup(ShaderWatcher&);
+void cleanup();

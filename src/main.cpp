@@ -12,7 +12,6 @@
 #include <iostream>
 #include <cassert>
 
-ShaderWatcher shaderWatcher;
 bool g_VALIDGLSTATE = true;
 
 
@@ -136,7 +135,7 @@ int WINAPI wWinMain(HINSTANCE hInstance, HINSTANCE, PWSTR pCmdLine, int nCmdShow
 	}
 
 	wglMakeCurrent(GetDC(hwnd), glContext);
-	g_VALIDGLSTATE = initialize(shaderWatcher);
+	g_VALIDGLSTATE = initialize();
 
 	BOOL console = AllocConsole();
 	freopen("CONOUT$", "w", stdout); 
@@ -160,7 +159,8 @@ int WINAPI wWinMain(HINSTANCE hInstance, HINSTANCE, PWSTR pCmdLine, int nCmdShow
 		glClearColor(1.0, 1.0, 0.0, 1.0);
 		glClear(GL_COLOR_BUFFER_BIT);
 		if (RUNNING) {
-			g_VALIDGLSTATE = shaderWatcher.watch();
+			g_VALIDGLSTATE = ShaderWatcher::getInstance().tryUpdateAssets();
+
 			handleInput();
 
 			if (windowSize.x != windowResizeEvent.x || windowSize.y != windowResizeEvent.y) {
@@ -173,8 +173,8 @@ int WINAPI wWinMain(HINSTANCE hInstance, HINSTANCE, PWSTR pCmdLine, int nCmdShow
 				drawFrame();	
 			}
 
-			SwapBuffers(deviceContext);	
 			glFinish();
+			SwapBuffers(deviceContext);	
 			assert(glGetError() == GL_NO_ERROR);
 		}
 
@@ -192,7 +192,7 @@ int WINAPI wWinMain(HINSTANCE hInstance, HINSTANCE, PWSTR pCmdLine, int nCmdShow
 		}
 	}
 
-	cleanup(shaderWatcher);
+	cleanup();
 	wglDeleteContext(glContext);
 	DestroyWindow(hwnd);
 	return 0;

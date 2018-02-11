@@ -39,10 +39,16 @@ std::string readTextFile(const char *path) {
 //=============================================
 // ShaderWatcher class implementation
 //=============================================
+ShaderWatcher::ShaderWatcher() { }
+
 ShaderWatcher::~ShaderWatcher(void) {
 	//TODO clear lists!
 }
 
+ShaderWatcher& ShaderWatcher::getInstance() {
+	static ShaderWatcher singleton;
+	return singleton;
+}
 
 #ifdef _WIN32
 bool ShaderWatcher::add(const char *filepath, ShaderProgram *program, GLenum type) {
@@ -79,14 +85,14 @@ static bool checkandUpdateTimestamp(ShaderInfo& info) {
 }
 #endif
 
-bool ShaderWatcher::watch(void) {
+bool ShaderWatcher::tryUpdateAssets(void) {
 	for (auto& n: m_shaderList) {
 		if (checkandUpdateTimestamp(n)) {
 			std::cout << "Updating " << n.pathToShader << "...\n";
 			std::string shadersrc = readTextFile(n.pathToShader);
 			bool a = n.shaderProgram->addShader(shadersrc.c_str(), n.shaderType);
 			bool b = n.shaderProgram->link();
-			if (!a||!b) {
+			if (n.shaderProgram->errorOccured()) {
 				std::cout << "Error updating " << n.pathToShader << "\n";
 				return false;
 			}

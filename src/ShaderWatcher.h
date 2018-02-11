@@ -27,13 +27,15 @@ struct ShaderInfo {
 class ShaderWatcher {
 private:
 	std::vector<ShaderInfo> m_shaderList;
-public:
+	ShaderWatcher();
 	~ShaderWatcher(void);
+public:
+	static ShaderWatcher& getInstance();
 #ifdef _WIN32
 	bool add(const char *, ShaderProgram *, GLenum);
 #endif
 	void clear(void);
-	bool watch(void);
+	bool tryUpdateAssets(void);
 };
 
 std::string readTextFile(const char *);
