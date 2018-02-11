@@ -39,50 +39,58 @@ ShaderProgram *fxaaProgram = nullptr;
 ShaderProgram *combinerProgram = nullptr;
 GLMesh *screenQuad = nullptr;
 
-const char *DEFAULT_VERT_SHADER = R"(
-	#version 450
-	in vec4 position; in vec2 texCoord;
-	out vec2 fragTexCoord;
-	void main(void) { gl_Position = position; fragTexCoord = texCoord; }
-)";
-
 void setupFrameBuffers();
 		
 bool initialize() {
 	ShaderWatcher& shaderWatcher = ShaderWatcher::getInstance();
 	bool initSuccessful = true;
 
+	const char *defaultVertexShader= "D://Projects/ShaderPreviewV2/shaders/default.vert";
 	const char *shaderPath = "D://Projects/ShaderPreviewV2/shaders/noisetex.frag";
 	const char *mainProgramPath = "D://Projects/ShaderPreviewV2/shaders/A/testificate.frag";
 	const char *fxaaProgramPath = "D://Projects/ShaderPreviewV2/shaders/A/postprocess-bloom.frag";
 	const char *combinerProgramPath = "D://Projects/ShaderPreviewV2/shaders/A/postprocess-combiner.frag";
 
 
-	// initialize shader progs.
-	noiseGeneratorProgram = new ShaderProgram();
-	noiseGeneratorProgram->addShader(DEFAULT_VERT_SHADER, GL_VERTEX_SHADER);
-	noiseGeneratorProgram->addShader(readTextFile(shaderPath).c_str(), GL_FRAGMENT_SHADER);
-	shaderWatcher.add(shaderPath, noiseGeneratorProgram, GL_FRAGMENT_SHADER);
-	initSuccessful = initSuccessful && noiseGeneratorProgram->link();
+	ASTNodeShaderProgram noiseGenProgram = {
+		"noise_generator", 
+		defaultVertexShader,
+		shaderPath
+	};
 
-	mainProgram = new ShaderProgram();
-	mainProgram->addShader(DEFAULT_VERT_SHADER, GL_VERTEX_SHADER);
-	mainProgram->addShader(readTextFile(mainProgramPath).c_str(), GL_FRAGMENT_SHADER);
-	shaderWatcher.add(mainProgramPath, mainProgram, GL_FRAGMENT_SHADER);
-	initSuccessful = initSuccessful && mainProgram->link();
+	ASTNodeShaderProgram mainProgramAST = {
+		"main_scene_program",
+		defaultVertexShader,
+		mainProgramPath
+	};
 
+	ASTNodeShaderProgram fxaaProgramAST = {
+		"fxaa_program",
+		defaultVertexShader,
+		fxaaProgramPath
+	};
 
-	fxaaProgram = new ShaderProgram();
-	fxaaProgram->addShader(DEFAULT_VERT_SHADER, GL_VERTEX_SHADER);
-	fxaaProgram->addShader(readTextFile(fxaaProgramPath).c_str(), GL_FRAGMENT_SHADER);
-	shaderWatcher.add(fxaaProgramPath, fxaaProgram, GL_FRAGMENT_SHADER);
-	initSuccessful = initSuccessful && fxaaProgram->link();
+	ASTNodeShaderProgram combinerProgramAST = {
+		"combiner_program",
+		defaultVertexShader,
+		combinerProgramPath
+	};
 
-	combinerProgram= new ShaderProgram();
-	combinerProgram->addShader(DEFAULT_VERT_SHADER, GL_VERTEX_SHADER);
-	combinerProgram->addShader(readTextFile(combinerProgramPath).c_str(), GL_FRAGMENT_SHADER);
-	shaderWatcher.add(combinerProgramPath, combinerProgram, GL_FRAGMENT_SHADER);
-	initSuccessful = initSuccessful && combinerProgram->link();
+	shaderWatcher.addShaderProgramResource(noiseGenProgram);
+	shaderWatcher.addShaderProgramResource(mainProgramAST);
+	shaderWatcher.addShaderProgramResource(fxaaProgramAST);
+	shaderWatcher.addShaderProgramResource(combinerProgramAST);
+
+	ShaderProgramResource *r1 = (ShaderProgramResource*)shaderWatcher.lookupResource(std::string(noiseGenProgram.identifier));
+	ShaderProgramResource *r2 = (ShaderProgramResource*)shaderWatcher.lookupResource(std::string(mainProgramAST.identifier));
+	ShaderProgramResource *r3 = (ShaderProgramResource*)shaderWatcher.lookupResource(std::string(fxaaProgramAST.identifier));
+	ShaderProgramResource *r4 = (ShaderProgramResource*)shaderWatcher.lookupResource(std::string(combinerProgramAST.identifier));
+
+	noiseGeneratorProgram = r1->program;
+	mainProgram = r2->program;
+	fxaaProgram = r3->program;
+	combinerProgram = r4->program;
+	
 
 	screenQuad = createQuad();
 
@@ -285,7 +293,7 @@ void drawFrame() {
 
 void cleanup() {
 	ShaderWatcher& shaderWatcher = ShaderWatcher::getInstance();
-	shaderWatcher.clear();
+	shaderWatcher.removeAllResources();
 	delete fxaaProgram;
 	delete mainProgram;
 	delete noiseGeneratorProgram;

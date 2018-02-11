@@ -156,20 +156,21 @@ int WINAPI wWinMain(HINSTANCE hInstance, HINSTANCE, PWSTR pCmdLine, int nCmdShow
 
 		auto frameStart = std::chrono::high_resolution_clock::now();
 
-		glClearColor(1.0, 1.0, 0.0, 1.0);
-		glClear(GL_COLOR_BUFFER_BIT);
 		if (RUNNING) {
-			g_VALIDGLSTATE = ShaderWatcher::getInstance().tryUpdateAssets();
-
-			handleInput();
-
+#if 0
 			if (windowSize.x != windowResizeEvent.x || windowSize.y != windowResizeEvent.y) {
 				std::cout << "We should resize textures...!\n";
 				windowSize = windowResizeEvent;
 				resizeTextures(windowResizeEvent.x, windowResizeEvent.y);
 			}
+#endif
+			ShaderWatcher::getInstance().tryUpdate();
 
-			if (g_VALIDGLSTATE) {
+			glClearColor(1.0, 1.0, 0.0, 1.0);
+			glClear(GL_COLOR_BUFFER_BIT);
+
+			if (ShaderWatcher::getInstance().resourcesAreOK()) {
+				handleInput();
 				drawFrame();	
 			}
 

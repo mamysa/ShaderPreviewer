@@ -6,6 +6,7 @@
 
 
 #ifdef _WIN32
+// get handle for file.
 static HANDLE initializeFileHandle(const char *path) {
 	HANDLE handle = CreateFile( path, 
 		GENERIC_READ,  
@@ -16,6 +17,23 @@ static HANDLE initializeFileHandle(const char *path) {
 		NULL );
 	assert(handle != INVALID_HANDLE_VALUE); 
 	return handle;
+}
+#endif
+
+#ifdef _WIN32
+// Query timestamp and return true if lastModified time is newer than the one
+// stored in the info struct.
+static bool checkandUpdateTimestamp(FileInfo& info) {
+	FILETIME time; 
+	bool status = GetFileTime(info.handle, NULL, NULL, &time);
+	FILETIME *t = &info.lastUpdateTime;
+	if (status && ( time.dwHighDateTime > t->dwHighDateTime || 
+		            time.dwLowDateTime  > t->dwLowDateTime ) ) {
+		info.lastUpdateTime = time;
+		return true;
+	}
+
+	return false;
 }
 #endif
 
@@ -37,6 +55,76 @@ std::string readTextFile(const char *path) {
 }
 
 //=============================================
+// FileInfo struct implementation 
+//=============================================
+FileInfo::FileInfo(const char *f) :
+	handle(initializeFileHandle(f)), 
+	lastUpdateTime({0, 0}),
+	filename(f)
+{ }
+
+bool FileInfo::isOK(void) {
+	return handle != INVALID_HANDLE_VALUE;	
+}
+
+FileInfo::~FileInfo(void) {
+	if (isOK())
+		CloseHandle(handle);		
+}
+
+//=============================================
+// ShaderProgramResource implementation
+//=============================================
+ShaderProgramResource::ShaderProgramResource(const char *ident) :
+	programIdentifier(ident),
+	program(new ShaderProgram()), 
+	requiresRelinking(false)
+{ }
+
+ShaderProgramResource::~ShaderProgramResource(void) {
+	// FIXME we should also be deleting program identifier but ATM we do not own it...
+	delete program;
+}
+
+void ShaderProgramResource::tryUpdate(void) {
+	if (requiresRelinking) {
+		program->link(); 
+		if (program->errorOccured()) {
+			std::cout << "Error updating shader program " << programIdentifier << "\n";
+		}
+
+		requiresRelinking = false;
+	}
+}
+
+bool ShaderProgramResource ::isOK(void) {
+	return !program->errorOccured();
+}
+
+//=============================================
+// ShaderResouce struct implementation 
+//=============================================
+
+ShaderResource::ShaderResource(const char *filename, GLenum type): 
+	fileInfo(filename), 
+	shaderType(type)   { }
+
+void ShaderResource::tryUpdate() {
+	if (!checkandUpdateTimestamp(fileInfo)) 
+		return;
+	
+	std::string shadersrc = readTextFile(fileInfo.filename);
+	for (ShaderProgramResource *res: shaderProgramResources) {
+		res->program->addShader(shadersrc.c_str(), shaderType);
+		res->requiresRelinking = true;
+	}
+}
+
+bool ShaderResource::isOK(void) {
+	return fileInfo.isOK();
+}
+
+//=============================================
 // ShaderWatcher class implementation
 //=============================================
 ShaderWatcher::ShaderWatcher() { }
@@ -50,60 +138,52 @@ ShaderWatcher& ShaderWatcher::getInstance() {
 	return singleton;
 }
 
-#ifdef _WIN32
-bool ShaderWatcher::add(const char *filepath, ShaderProgram *program, GLenum type) {
-	ShaderInfo shaderInfo; 
-	shaderInfo.pathToShader = filepath;
-	shaderInfo.shaderProgram = program;
-	shaderInfo.shaderHandle = initializeFileHandle(filepath);
-	shaderInfo.shaderType = type;
-	bool b = GetFileTime(shaderInfo.shaderHandle, NULL, NULL, &shaderInfo.lastUpdateTime);
-	assert(b);
-
-	m_shaderList.push_back(shaderInfo);
-	return true;
-}
-#endif
-
-
-void ShaderWatcher::clear(void) {
-	m_shaderList.clear();
-}
-
-#ifdef _WIN32
-static bool checkandUpdateTimestamp(ShaderInfo& info) {
-	FILETIME time; 
-	bool status = GetFileTime(info.shaderHandle, NULL, NULL, &time);
-	FILETIME *t = &info.lastUpdateTime;
-	if (status && ( time.dwHighDateTime > t->dwHighDateTime || 
-		            time.dwLowDateTime  > t->dwLowDateTime ) ) {
-		info.lastUpdateTime = time;
-		return true;
+// TODO maybe make this more explicit?
+void ShaderWatcher::addShaderAsset(const char *filename, GLenum type, ShaderProgramResource *prog) {
+	auto iterator = m_resourceList.find(std::string(filename));
+	if (iterator == m_resourceList.end()) {
+		ShaderResource *res = new ShaderResource(filename, type);
+		res->shaderProgramResources.push_back(prog);
+		m_resourceList.insert(std::pair<std::string, BaseResource *>(std::string(filename), res));
 	}
-
-	return false;
+	else {
+		ShaderResource *res = (ShaderResource *)iterator->second; // uh-oh!
+		res->shaderProgramResources.push_back(prog);
+	}
 }
-#endif
 
-bool ShaderWatcher::tryUpdateAssets(void) {
-	for (auto& n: m_shaderList) {
-		if (checkandUpdateTimestamp(n)) {
-			std::cout << "Updating " << n.pathToShader << "...\n";
-			std::string shadersrc = readTextFile(n.pathToShader);
-			bool a = n.shaderProgram->addShader(shadersrc.c_str(), n.shaderType);
-			bool b = n.shaderProgram->link();
-			if (n.shaderProgram->errorOccured()) {
-				std::cout << "Error updating " << n.pathToShader << "\n";
-				return false;
-			}
-		}
+void ShaderWatcher::addShaderProgramResource(const ASTNodeShaderProgram& progInfo) {
+	ShaderProgramResource *resource = new ShaderProgramResource(progInfo.identifier);
+	this->addShaderAsset(progInfo.vertShaderPath, GL_VERTEX_SHADER,   resource);
+	this->addShaderAsset(progInfo.fragShaderPath, GL_FRAGMENT_SHADER, resource);
+	m_resourceList.insert(std::pair<std::string, BaseResource *>(std::string(progInfo.identifier), resource));
+}
 
-		if (n.shaderProgram->errorOccured()) { 
+
+void ShaderWatcher::tryUpdate(void) {
+	for (auto it = m_resourceList.begin(); it != m_resourceList.end(); it++)
+		it->second->tryUpdate();
+}
+
+bool ShaderWatcher::resourcesAreOK(void) {
+	for (auto it = m_resourceList.begin(); it != m_resourceList.end(); it++) {
+		if (!it->second->isOK()) {
 			return false;
 		}
 	}
-
-	assert(glGetError() == GL_NO_ERROR);
 	return true;
 }
 
+void ShaderWatcher::removeAllResources(void) {
+	for (auto it = m_resourceList.begin(); it != m_resourceList.end(); it++)
+		delete it->second;
+	m_resourceList.clear();
+}
+
+BaseResource * ShaderWatcher::lookupResource(std::string& ident) {
+	auto it = m_resourceList.find(ident);
+	if (it != m_resourceList.end()) {
+		return it->second;
+	}
+	return nullptr;
+}
