@@ -147,45 +147,39 @@ int WINAPI wWinMain(HINSTANCE hInstance, HINSTANCE, PWSTR pCmdLine, int nCmdShow
 	MSG msg = { };
 	HDC deviceContext = GetDC(hwnd);
 
-
 	//wglSwapIntervalEXT(0);
-	for (;;) {
-		if(!RUNNING) {
-			break;
-		}
+	while (RUNNING) {
+		glClearColor(1.0, 1.0, 0.0, 1.0);
+		glClear(GL_COLOR_BUFFER_BIT);
 
 		auto frameStart = std::chrono::high_resolution_clock::now();
 
-		if (RUNNING) {
-#if 0
-			if (windowSize.x != windowResizeEvent.x || windowSize.y != windowResizeEvent.y) {
-				std::cout << "We should resize textures...!\n";
-				windowSize = windowResizeEvent;
-				resizeTextures(windowResizeEvent.x, windowResizeEvent.y);
-			}
-#endif
-			ShaderWatcher::getInstance().tryUpdate();
+		ShaderWatcher::getInstance().tryUpdate();
 
-			glClearColor(1.0, 1.0, 0.0, 1.0);
-			glClear(GL_COLOR_BUFFER_BIT);
+		
 
-			if (ShaderWatcher::getInstance().resourcesAreOK()) {
-				handleInput();
-				drawFrame();	
-			}
-
-			glFinish();
-			SwapBuffers(deviceContext);	
-			assert(glGetError() == GL_NO_ERROR);
+		if (ShaderWatcher::getInstance().resourcesAreOK()) {
+			handleInput();
+			drawFrame();	
 		}
+
+		glFinish();
+		SwapBuffers(deviceContext);	
+		assert(glGetError() == GL_NO_ERROR);
 
 		auto frameEnd = std::chrono::high_resolution_clock::now();
 		auto ms = std::chrono::duration_cast<std::chrono::milliseconds>(frameEnd- frameStart);
 		float fps = 1.0f / ((float)ms.count() * 0.001f);
 		std::string timestr = std::to_string((int)floor(fps)) + " FPS\n";
-
 		SetWindowText(hwnd, timestr.c_str());
 
+#if 0
+		if (windowSize.x != windowResizeEvent.x || windowSize.y != windowResizeEvent.y) {
+			std::cout << "We should resize textures...!\n";
+			windowSize = windowResizeEvent;
+			resizeTextures(windowResizeEvent.x, windowResizeEvent.y);
+		}
+#endif
 
 		while (PeekMessage(&msg, NULL, 0, 0, PM_REMOVE)) {
 			TranslateMessage(&msg);
