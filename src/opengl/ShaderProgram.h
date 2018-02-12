@@ -17,16 +17,17 @@ public:
 	bool errorOccured(void) const { return m_errorOccured; }
 };
 
-class ShaderProgram {
+class GLShaderProgram {
 private:
 	GLuint m_programID;
 	const GLShader *m_vertShader;
 	const GLShader *m_geomShader;
 	const GLShader *m_fragShader;
 	bool m_errorOccured = false; 
+	bool m_linked = false; //ensure shaders cannot be reattached without resetting the thing first.
 public:
-	ShaderProgram(void);
-	~ShaderProgram(void); 
+	GLShaderProgram(void);
+	~GLShaderProgram(void); 
 	void add(const GLShader *);
 	void link(void);
 	bool errorOccured(void) const { return m_errorOccured; }

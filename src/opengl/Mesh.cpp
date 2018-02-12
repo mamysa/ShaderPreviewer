@@ -56,7 +56,7 @@ void GLMesh::makeGLResource(void) {
 	assert(glGetError() == GL_NO_ERROR);
 }
 
-void GLMesh::setupAttributes(const ShaderProgram& program) const {
+void GLMesh::setupAttributes(const GLShaderProgram& program) const {
 	assert(glGetError() == GL_NO_ERROR);
 	glBindBuffer(GL_ARRAY_BUFFER, m_vbo);
 	glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, m_ebo);

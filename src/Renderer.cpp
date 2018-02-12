@@ -33,10 +33,10 @@ GLuint  bloomFramebuffer2ID;
 #define NOISETEXSIZE 256 
 #define W 800 
 #define H 600 
-ShaderProgram *noiseGeneratorProgram = nullptr;
-ShaderProgram *mainProgram = nullptr;
-ShaderProgram *fxaaProgram = nullptr;
-ShaderProgram *combinerProgram = nullptr;
+GLShaderProgram *noiseGeneratorProgram = nullptr;
+GLShaderProgram *mainProgram = nullptr;
+GLShaderProgram *fxaaProgram = nullptr;
+GLShaderProgram *combinerProgram = nullptr;
 GLMesh *screenQuad = nullptr;
 
 void setupFrameBuffers();

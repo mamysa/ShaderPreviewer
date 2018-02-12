@@ -77,7 +77,7 @@ FileInfo::~FileInfo(void) {
 //=============================================
 ShaderProgramResource::ShaderProgramResource(const char *ident) :
 	programIdentifier(ident),
-	program(new ShaderProgram()), 
+	program(new GLShaderProgram()), 
 	requiresRelinking(false)
 { }
 

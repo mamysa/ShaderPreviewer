@@ -149,14 +149,11 @@ int WINAPI wWinMain(HINSTANCE hInstance, HINSTANCE, PWSTR pCmdLine, int nCmdShow
 
 	//wglSwapIntervalEXT(0);
 	while (RUNNING) {
+		ShaderWatcher::getInstance().tryUpdate();
 		glClearColor(1.0, 1.0, 0.0, 1.0);
 		glClear(GL_COLOR_BUFFER_BIT);
 
 		auto frameStart = std::chrono::high_resolution_clock::now();
-
-		ShaderWatcher::getInstance().tryUpdate();
-
-		
 
 		if (ShaderWatcher::getInstance().resourcesAreOK()) {
 			handleInput();

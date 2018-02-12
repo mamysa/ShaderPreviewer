@@ -8,7 +8,7 @@
 #include <map>
 
 
-class ShaderProgram;
+class GLShaderProgram;
 class GLShader;
 class ShaderProgramResource;
 
@@ -19,7 +19,7 @@ struct ShaderInfo {
 	const char *pathToShader;
 #endif
 	GLenum shaderType;
-	ShaderProgram *shaderProgram;		
+	GLShaderProgram *shaderProgram;		
 };
 
 struct FileInfo {
@@ -53,7 +53,7 @@ public:
 class ShaderProgramResource: public BaseResource {
 public:
 	const char *programIdentifier;
-	ShaderProgram *program;
+	GLShaderProgram *program;
 	bool requiresRelinking;
 
 	ShaderProgramResource(const char *);

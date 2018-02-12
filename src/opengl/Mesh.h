@@ -2,7 +2,7 @@
 #include "GL/glew.h"
 #include <GL/gl.h>
 
-class ShaderProgram;
+class GLShaderProgram;
 
 //=============================================
 // Mesh layout constants 
@@ -38,7 +38,7 @@ class GLMesh {
 public:
 	GLMesh(GLfloat *, GLuint *, int, int);
 	~GLMesh(void);
-	void setupAttributes(const ShaderProgram&) const;
+	void setupAttributes(const GLShaderProgram&) const;
 	void draw(void) const;
 	void bind(int=1) const;
 };
