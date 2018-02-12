@@ -3,18 +3,32 @@
 #include <GL/gl.h>
 #include "utils/Math.h"
 
+class GLShader {
+private:
+	GLuint m_shaderID;
+	GLenum m_shaderType;
+	bool m_errorOccured = true;
+public:
+	GLShader(GLenum);
+	~GLShader(void);
+	void compile(const char *);
+	GLuint getID(void) const;
+	GLenum getType(void) const;
+	bool errorOccured(void) const { return m_errorOccured; }
+};
+
 class ShaderProgram {
 private:
-	GLuint m_vertshaderID;
-	GLuint m_geomshaderID;
-	GLuint m_fragshaderID;
 	GLuint m_programID;
+	const GLShader *m_vertShader;
+	const GLShader *m_geomShader;
+	const GLShader *m_fragShader;
 	bool m_errorOccured = false; 
 public:
 	ShaderProgram(void);
 	~ShaderProgram(void); 
-	bool addShader(const char *, GLenum);
-	bool link(void);
+	void add(const GLShader *);
+	void link(void);
 	bool errorOccured(void) const { return m_errorOccured; }
 	void use(int = 1) const;
 	// various uniform setters

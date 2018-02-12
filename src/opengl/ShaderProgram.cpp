@@ -4,67 +4,79 @@
 #include "utils/Math.h"
 #include <cassert>
 
+//=============================================
+// GLShader class implementation
+//=============================================
+GLShader::GLShader(GLenum shaderType) :
+	m_shaderID(0),
+	m_shaderType(shaderType) { }
+
+GLShader::~GLShader(void) {
+	if (m_shaderID)  
+		glDeleteShader(m_shaderID);
+}
+
+void GLShader::compile(const char *src) {
+	m_shaderID = (m_shaderID == 0) ? glCreateShader(m_shaderType) : m_shaderID;
+	glShaderSource(m_shaderID, 1, &src, NULL);
+	glCompileShader(m_shaderID);
+
+	m_errorOccured = false;
+	GLint status;
+	glGetShaderiv(m_shaderID, GL_COMPILE_STATUS, &status);
+	if (status != GL_TRUE) {
+		char log_string[ERRORMESG_BUF_LENGTH];
+		glGetShaderInfoLog(m_shaderID, ERRORMESG_BUF_LENGTH, 0, log_string);
+		std::cout << "Shader Error: \n" << log_string << "\n";
+		m_errorOccured = true;
+	}
+}
+
+GLuint GLShader::getID(void) const {
+	return m_shaderID;
+}
+
+GLenum GLShader::getType(void) const {
+	return m_shaderType;
+}
+
+//=============================================
+// GLShaderProgram class implementation
+//=============================================
 ShaderProgram::ShaderProgram(void) :
-m_vertshaderID(0),
-m_geomshaderID(0),
-m_fragshaderID(0),
-m_programID(0) { }
+m_programID(0),
+m_vertShader(nullptr),
+m_geomShader(nullptr),
+m_fragShader(nullptr) { }
 
 ShaderProgram::~ShaderProgram(void) {
-	if (m_programID) { glDeleteProgram(m_programID); }
-	if (m_vertshaderID) { glDeleteShader(m_vertshaderID); }
-	if (m_geomshaderID) { glDeleteShader(m_geomshaderID); }
-	if (m_fragshaderID) { glDeleteShader(m_fragshaderID); }
+	if (m_programID)
+		glDeleteProgram(m_programID); 
 }
 
-bool ShaderProgram::addShader(const char *source, GLenum type) { 
-	GLuint *shaderID = nullptr;
-	if (type == GL_VERTEX_SHADER)   { shaderID = &m_vertshaderID; }
-	if (type == GL_GEOMETRY_SHADER) { shaderID = &m_geomshaderID; }
-	if (type == GL_FRAGMENT_SHADER) { shaderID = &m_fragshaderID; }
-	assert(shaderID != nullptr);
-
-	*shaderID = (*shaderID == 0) ? glCreateShader(type) : *shaderID;
-	glShaderSource(*shaderID, 1, &source, NULL);
-	glCompileShader(*shaderID);
-
-	// check status 
-	GLint status;
-	glGetShaderiv(*shaderID, GL_COMPILE_STATUS, &status);
-	if (status != GL_TRUE) {
-#if 0
-		char log_string[ERRORMESG_BUF_LENGTH];
-		glGetShaderInfoLog(*shaderID, ERRORMESG_BUF_LENGTH, 0, log_string);
-		std::cout << "Shader Error: \n" << log_string << "\n";
-#endif
-		return false;
-	}
-
-
-	return true;
+void ShaderProgram::add(const GLShader *shader) { 
+	GLenum type = shader->getType();
+	if (type == GL_VERTEX_SHADER   && !m_vertShader) { m_vertShader = shader; }
+	if (type == GL_GEOMETRY_SHADER && !m_geomShader) { m_geomShader = shader; }
+	if (type == GL_FRAGMENT_SHADER && !m_fragShader) { m_fragShader = shader; }
 }
 
-bool ShaderProgram::link(void) {
+void ShaderProgram::link(void) {
 	if (m_programID == 0) {
 		m_programID = glCreateProgram();
-		if (m_vertshaderID != 0) { glAttachShader(m_programID, m_vertshaderID); }
-		if (m_geomshaderID != 0) { glAttachShader(m_programID, m_geomshaderID); }
-		if (m_fragshaderID != 0) { glAttachShader(m_programID, m_fragshaderID); }
+		if (m_vertShader) { glAttachShader(m_programID, m_vertShader->getID()); }
+		if (m_geomShader) { glAttachShader(m_programID, m_geomShader->getID()); }
+		if (m_fragShader) { glAttachShader(m_programID, m_fragShader->getID()); }
 	}
+
 	glLinkProgram(m_programID);
+	m_errorOccured = false;
 
 	GLint status;
 	glGetProgramiv(m_programID, GL_LINK_STATUS, &status);
 	if (status != GL_TRUE) {
-		char log_string[ERRORMESG_BUF_LENGTH];
-		glGetProgramInfoLog(m_programID, ERRORMESG_BUF_LENGTH, 0, log_string);
-		std::cout << log_string << "\n\n";
 		m_errorOccured = true;
-		return false;
 	}
-
-	m_errorOccured = false;
-	return true;
 }
 
 void ShaderProgram::use(int id) const {

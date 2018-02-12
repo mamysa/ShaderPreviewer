@@ -9,6 +9,7 @@
 
 
 class ShaderProgram;
+class GLShader;
 class ShaderProgramResource;
 
 struct ShaderInfo {
@@ -40,8 +41,9 @@ public:
 class ShaderResource: public BaseResource {
 public: 
 	FileInfo fileInfo;
+	GLShader *shader;
 	std::vector<ShaderProgramResource *> shaderProgramResources;
-	GLenum shaderType;
+
 	ShaderResource(const char *, GLenum);
 
 	void tryUpdate(void);

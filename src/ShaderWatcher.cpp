@@ -90,7 +90,7 @@ void ShaderProgramResource::tryUpdate(void) {
 	if (requiresRelinking) {
 		program->link(); 
 		if (program->errorOccured()) {
-			std::cout << "Error updating shader program " << programIdentifier << "\n";
+			std::cout << "Error linking shader program " << programIdentifier << "\n";
 		}
 
 		requiresRelinking = false;
@@ -107,21 +107,29 @@ bool ShaderProgramResource ::isOK(void) {
 
 ShaderResource::ShaderResource(const char *filename, GLenum type): 
 	fileInfo(filename), 
-	shaderType(type)   { }
+	shader(new GLShader(type))   { }
 
 void ShaderResource::tryUpdate() {
 	if (!checkandUpdateTimestamp(fileInfo)) 
 		return;
 	
 	std::string shadersrc = readTextFile(fileInfo.filename);
+	shader->compile(shadersrc.c_str());
+	if (shader->errorOccured()) {
+		std::cout << "Error updating shader: " << fileInfo.filename << "\n";
+		std::cout << "Not relinking dependent programs\n\n";
+		return;
+	}
+
+
 	for (ShaderProgramResource *res: shaderProgramResources) {
-		res->program->addShader(shadersrc.c_str(), shaderType);
+		res->program->add(shader);
 		res->requiresRelinking = true;
 	}
 }
 
 bool ShaderResource::isOK(void) {
-	return fileInfo.isOK();
+	return fileInfo.isOK() && !shader->errorOccured();
 }
 
 //=============================================
@@ -138,7 +146,6 @@ ShaderWatcher& ShaderWatcher::getInstance() {
 	return singleton;
 }
 
-// TODO maybe make this more explicit?
 void ShaderWatcher::addShaderAsset(const char *filename, GLenum type, ShaderProgramResource *prog) {
 	auto iterator = m_resourceList.find(std::string(filename));
 	if (iterator == m_resourceList.end()) {
