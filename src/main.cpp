@@ -134,12 +134,12 @@ int WINAPI wWinMain(HINSTANCE hInstance, HINSTANCE, PWSTR pCmdLine, int nCmdShow
 		return 3;	
 	}
 
-	wglMakeCurrent(GetDC(hwnd), glContext);
-	g_VALIDGLSTATE = initialize();
-
 	BOOL console = AllocConsole();
 	freopen("CONOUT$", "w", stdout); 
 
+	wglMakeCurrent(GetDC(hwnd), glContext);
+	g_VALIDGLSTATE = initialize();
+	
 	ShowWindow(hwnd, nCmdShow);
 	
 	// Run the message loop.

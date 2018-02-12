@@ -15,7 +15,9 @@ static HANDLE initializeFileHandle(const char *path) {
 		OPEN_EXISTING, 
 		FILE_ATTRIBUTE_NORMAL, 
 		NULL );
-	assert(handle != INVALID_HANDLE_VALUE); 
+	if (handle == INVALID_HANDLE_VALUE) {
+		std::cout << "Invalid file: " + std::string(path);
+	}
 	return handle;
 }
 #endif
