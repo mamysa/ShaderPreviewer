@@ -16,4 +16,4 @@ enum KeyboardMap {
 };
 
 const bool * getKeys(void);
-void setKeyState(WPARAM, bool);
+void setKeyState(void);

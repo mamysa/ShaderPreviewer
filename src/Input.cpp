@@ -1,19 +1,21 @@
 #include "Input.h"
+#include "SDL.h"
 
 bool keys[11] = { false };
 
-void setKeyState(WPARAM wParam, bool state) {
-	if (wParam == VK_LEFT)   { keys[KEY_LEFT]  = state; }
-	if (wParam == VK_RIGHT)  { keys[KEY_RIGHT] = state; }
-	if (wParam == VK_UP)     { keys[KEY_UP] = state; }
-	if (wParam == VK_DOWN)   { keys[KEY_DOWN] = state; }
-	if (wParam == 'W')  { keys[KEY_W] = state; }
-	if (wParam == 'S')  { keys[KEY_S] = state; }
-	if (wParam == 'A')  { keys[KEY_A] = state; }
-	if (wParam == 'D')  { keys[KEY_D] = state; }
-	if (wParam == 'C')  { keys[KEY_C] = state; }
-	if (wParam == VK_SPACE)  { keys[KEY_SPACE] = state; }
-	if (wParam == VK_ESCAPE) { keys[KEY_ESC] = state; }
+void setKeyState() {
+	const Uint8 *keystate = SDL_GetKeyboardState(NULL);
+	keys[KEY_LEFT]  = keystate[SDL_SCANCODE_LEFT];
+	keys[KEY_RIGHT]  = keystate[SDL_SCANCODE_RIGHT];
+	keys[KEY_UP]  = keystate[SDL_SCANCODE_UP];
+	keys[KEY_DOWN]  = keystate[SDL_SCANCODE_DOWN];
+	keys[KEY_W]  = keystate[SDL_SCANCODE_W];
+	keys[KEY_S]  = keystate[SDL_SCANCODE_S];
+	keys[KEY_A]  = keystate[SDL_SCANCODE_A];
+	keys[KEY_D]  = keystate[SDL_SCANCODE_D];
+	keys[KEY_C]  = keystate[SDL_SCANCODE_C];
+	keys[KEY_SPACE]  = keystate[SDL_SCANCODE_SPACE];
+	keys[KEY_ESC]  = keystate[SDL_SCANCODE_ESCAPE];
 }
 
 const bool * getKeys(void) {
