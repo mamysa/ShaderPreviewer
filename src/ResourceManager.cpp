@@ -1,7 +1,7 @@
 #include <cassert>
 #include <iostream>
 #include <fstream>
-#include "ShaderWatcher.h"
+#include "ResourceManager.h"
 #include "opengl/ShaderProgram.h"
 
 
