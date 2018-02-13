@@ -1,7 +1,7 @@
 #include "GL/glew.h"
 #include <GL/gl.h>
 #include "Renderer.h"
-#include "ShaderWatcher.h"
+#include "ResourceManager.h"
 #include "opengl/ShaderProgram.h"
 #include "opengl/Mesh.h"
 #include "Input.h"
@@ -42,7 +42,7 @@ GLMesh *screenQuad = nullptr;
 void setupFrameBuffers();
 		
 bool initialize() {
-	ShaderWatcher& shaderWatcher = ShaderWatcher::getInstance();
+	ResourceManager& shaderWatcher = ResourceManager::getInstance();
 	bool initSuccessful = true;
 
 	const char *defaultVertexShader= "D://Projects/ShaderPreviewV2/shaders/default.vert";
@@ -292,7 +292,7 @@ void drawFrame() {
 }
 
 void cleanup() {
-	ShaderWatcher& shaderWatcher = ShaderWatcher::getInstance();
+	ResourceManager& shaderWatcher = ResourceManager::getInstance();
 	shaderWatcher.removeAllResources();
 	delete fxaaProgram;
 	delete mainProgram;

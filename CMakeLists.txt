@@ -3,7 +3,7 @@ project (ShaderPreviewV2)
 
 set (SOURCE_FILES 
 	${PROJECT_SOURCE_DIR}/src/main.cpp
-	${PROJECT_SOURCE_DIR}/src/ShaderWatcher.cpp
+	${PROJECT_SOURCE_DIR}/src/ResourceManager.cpp
 	${PROJECT_SOURCE_DIR}/src/Renderer.cpp
 	${PROJECT_SOURCE_DIR}/src/Input.cpp
 	${PROJECT_SOURCE_DIR}/src/opengl/ShaderProgram.cpp

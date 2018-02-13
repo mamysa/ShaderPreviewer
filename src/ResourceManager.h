@@ -72,18 +72,18 @@ struct ASTNodeShaderProgram {
 
 
 //=============================================
-// ShaderWatcher class 
+// ResourceManager class 
 // Checks the last modified time of some file (shader) and reloads the shader 
 // if necessary.
 //=============================================
-class ShaderWatcher {
+class ResourceManager {
 private:
 	std::map<std::string, BaseResource *> m_resourceList; 
-	ShaderWatcher();
-	~ShaderWatcher(void);
+	ResourceManager();
+	~ResourceManager(void);
 	void addShaderAsset(const char *, GLenum, ShaderProgramResource *);
 public:
-	static ShaderWatcher& getInstance();
+	static ResourceManager& getInstance();
 	void addShaderProgramResource(const ASTNodeShaderProgram&);
 	void tryUpdate(void);
 	bool resourcesAreOK(void);

@@ -135,20 +135,20 @@ bool ShaderResource::isOK(void) {
 }
 
 //=============================================
-// ShaderWatcher class implementation
+// ResourceManager class implementation
 //=============================================
-ShaderWatcher::ShaderWatcher() { }
+ResourceManager::ResourceManager() { }
 
-ShaderWatcher::~ShaderWatcher(void) {
+ResourceManager::~ResourceManager(void) {
 	//TODO clear lists!
 }
 
-ShaderWatcher& ShaderWatcher::getInstance() {
-	static ShaderWatcher singleton;
+ResourceManager& ResourceManager::getInstance() {
+	static ResourceManager singleton;
 	return singleton;
 }
 
-void ShaderWatcher::addShaderAsset(const char *filename, GLenum type, ShaderProgramResource *prog) {
+void ResourceManager::addShaderAsset(const char *filename, GLenum type, ShaderProgramResource *prog) {
 	auto iterator = m_resourceList.find(std::string(filename));
 	if (iterator == m_resourceList.end()) {
 		ShaderResource *res = new ShaderResource(filename, type);
@@ -161,7 +161,7 @@ void ShaderWatcher::addShaderAsset(const char *filename, GLenum type, ShaderProg
 	}
 }
 
-void ShaderWatcher::addShaderProgramResource(const ASTNodeShaderProgram& progInfo) {
+void ResourceManager::addShaderProgramResource(const ASTNodeShaderProgram& progInfo) {
 	ShaderProgramResource *resource = new ShaderProgramResource(progInfo.identifier);
 	this->addShaderAsset(progInfo.vertShaderPath, GL_VERTEX_SHADER,   resource);
 	this->addShaderAsset(progInfo.fragShaderPath, GL_FRAGMENT_SHADER, resource);
@@ -169,12 +169,12 @@ void ShaderWatcher::addShaderProgramResource(const ASTNodeShaderProgram& progInf
 }
 
 
-void ShaderWatcher::tryUpdate(void) {
+void ResourceManager::tryUpdate(void) {
 	for (auto it = m_resourceList.begin(); it != m_resourceList.end(); it++)
 		it->second->tryUpdate();
 }
 
-bool ShaderWatcher::resourcesAreOK(void) {
+bool ResourceManager::resourcesAreOK(void) {
 	for (auto it = m_resourceList.begin(); it != m_resourceList.end(); it++) {
 		if (!it->second->isOK()) {
 			return false;
@@ -183,13 +183,13 @@ bool ShaderWatcher::resourcesAreOK(void) {
 	return true;
 }
 
-void ShaderWatcher::removeAllResources(void) {
+void ResourceManager::removeAllResources(void) {
 	for (auto it = m_resourceList.begin(); it != m_resourceList.end(); it++)
 		delete it->second;
 	m_resourceList.clear();
 }
 
-BaseResource * ShaderWatcher::lookupResource(std::string& ident) {
+BaseResource * ResourceManager::lookupResource(std::string& ident) {
 	auto it = m_resourceList.find(ident);
 	if (it != m_resourceList.end()) {
 		return it->second;
