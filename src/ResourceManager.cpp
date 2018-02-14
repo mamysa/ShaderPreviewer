@@ -3,6 +3,7 @@
 #include <fstream>
 #include "ResourceManager.h"
 #include "opengl/ShaderProgram.h"
+#include "Logger.h"
 
 
 #ifdef _WIN32
@@ -16,7 +17,7 @@ static HANDLE initializeFileHandle(const char *path) {
 		FILE_ATTRIBUTE_NORMAL, 
 		NULL );
 	if (handle == INVALID_HANDLE_VALUE) {
-		std::cout << "Invalid file: " + std::string(path);
+		Logger::add("Unable to open file " + std::string(path) + "\n");	
 	}
 	return handle;
 }
@@ -92,7 +93,7 @@ void ShaderProgramResource::tryUpdate(void) {
 	if (requiresRelinking) {
 		program->link(); 
 		if (program->errorOccured()) {
-			std::cout << "Error linking shader program " << programIdentifier << "\n";
+			Logger::add("Error linking shader program " + std::string(programIdentifier) + "\n");	
 		}
 
 		requiresRelinking = false;
@@ -118,14 +119,12 @@ void ShaderResource::tryUpdate() {
 	std::string shadersrc = readTextFile(fileInfo.filename);
 	shader->compile(shadersrc.c_str());
 	if (shader->errorOccured()) {
-		std::cout << "Error updating shader: " << fileInfo.filename << "\n";
-		std::cout << "Not relinking dependent programs\n\n";
+		Logger::add("Error updating shader: " + std::string(fileInfo.filename) + "\n");
 		return;
 	}
 
-
 	for (ShaderProgramResource *res: shaderProgramResources) {
-		res->program->add(shader);
+		//res->program->add(shader);
 		res->requiresRelinking = true;
 	}
 }
@@ -149,16 +148,18 @@ ResourceManager& ResourceManager::getInstance() {
 }
 
 void ResourceManager::addShaderAsset(const char *filename, GLenum type, ShaderProgramResource *prog) {
+	ShaderResource *res; 
 	auto iterator = m_resourceList.find(std::string(filename));
 	if (iterator == m_resourceList.end()) {
-		ShaderResource *res = new ShaderResource(filename, type);
-		res->shaderProgramResources.push_back(prog);
+		res = new ShaderResource(filename, type);
 		m_resourceList.insert(std::pair<std::string, BaseResource *>(std::string(filename), res));
 	}
 	else {
-		ShaderResource *res = (ShaderResource *)iterator->second; // uh-oh!
-		res->shaderProgramResources.push_back(prog);
+		res = (ShaderResource *)iterator->second; // uh-oh!
 	}
+	
+	res->shaderProgramResources.push_back(prog);
+	prog->program->add(res->shader);
 }
 
 void ResourceManager::addShaderProgramResource(const ASTNodeShaderProgram& progInfo) {
