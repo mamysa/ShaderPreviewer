@@ -30,6 +30,7 @@ bool RUNNING = true;
 
 
 int main(int argc, char **argv) {
+	FreeConsole();
 	if (SDL_Init(SDL_INIT_VIDEO) != 0) {
 		MessageBox(NULL, "Error initializing SDL", NULL, MB_OK);
 		return 1;
@@ -83,15 +84,13 @@ int main(int argc, char **argv) {
 		for (auto it = messages.begin(); it != messages.end(); it++) {
 			ImGui::Text(it->c_str());
 		}
+		//ImGui::SetScrollFromPosY(ImGui::GetScrollMaxY());
 
 		//ImGui::SetWindowSize(ImVec2(600, 300));
 		//std::string s = std::to_string(vec.x) + " " + std::to_string(vec.y);
 		
 		//ImGui::Text(s.c_str());
 		ImGui::End();
-
-
-
 
 		glClearColor(1.0, 1.0, 0.0, 1.0);
 		glClear(GL_COLOR_BUFFER_BIT);

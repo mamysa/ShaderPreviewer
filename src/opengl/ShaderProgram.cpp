@@ -22,14 +22,21 @@ void GLShader::compile(const char *src) {
 	glCompileShader(m_shaderID);
 
 	m_errorOccured = false;
-	GLint status;
+	GLint status; 
 	glGetShaderiv(m_shaderID, GL_COMPILE_STATUS, &status);
 	if (status != GL_TRUE) {
-		char log_string[ERRORMESG_BUF_LENGTH];
-		glGetShaderInfoLog(m_shaderID, ERRORMESG_BUF_LENGTH, 0, log_string);
-		std::cout << "Shader Error: \n" << log_string << "\n";
 		m_errorOccured = true;
 	}
+}
+
+std::string GLShader::getErrorMessage(void) {
+	if (m_errorOccured) {
+		char log_string[ERRORMESG_BUF_LENGTH];
+		glGetShaderInfoLog(m_shaderID, ERRORMESG_BUF_LENGTH, 0, log_string);
+		return std::string(log_string);
+	}
+	
+	return "";
 }
 
 GLuint GLShader::getID(void) const {

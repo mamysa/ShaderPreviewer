@@ -1,7 +1,7 @@
 #include <list>
 #include "Logger.h"
 
-#define MAX_LOG_ENTRIES 3 
+#define MAX_LOG_ENTRIES 32 
 
 std::list<std::string> Logger::m_buf;
 

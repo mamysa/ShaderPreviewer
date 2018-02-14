@@ -2,6 +2,7 @@
 #include "GL/glew.h"
 #include <GL/gl.h>
 #include "utils/Math.h"
+#include "string"
 
 class GLShader {
 private:
@@ -12,6 +13,7 @@ public:
 	GLShader(GLenum);
 	~GLShader(void);
 	void compile(const char *);
+	std::string getErrorMessage(void);
 	GLuint getID(void) const;
 	GLenum getType(void) const;
 	bool errorOccured(void) const { return m_errorOccured; }
