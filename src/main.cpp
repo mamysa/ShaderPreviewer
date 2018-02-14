@@ -14,20 +14,15 @@
 #include <cassert>
 #include "imgui.h"
 #include "ui/UIRender.h"
+#include "Logger.h"
 
 
-bool g_VALIDGLSTATE = true;
 
 
 Vector3 windowSize = Vector3(800, 600, 0);
 Vector3 windowResizeEvent = Vector3(800, 600, 0);
 
-LRESULT CALLBACK WindowProc(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam);
-
-HGLRC glContext;
 bool RUNNING = true;
-bool STAGE_ONE_SUCCESS = false;
-bool STAGE2_SUCCESS = false;
 
 
 #define W 800
@@ -62,11 +57,12 @@ int main(int argc, char **argv) {
 	//initialize();
 	SDL_ShowWindow(window);
 	ImGui::CreateContext();
-	ImGuiIO& io = ImGui::GetIO(); (void)io;
+	ImGuiIO& io = ImGui::GetIO(); 
 	ImGui_ImplSdlGL3_Init(window);
 	ImGui::StyleColorsDark();
 	
-	std::string	mystr("yay\n");
+	initialize();
+
 	SDL_Event event;
 	//wglSwapIntervalEXT(0);
 	while (RUNNING) {
@@ -80,21 +76,40 @@ int main(int argc, char **argv) {
 
 		ImGui_ImplSdlGL3_NewFrame(window);
 
-		ImGui::Begin("Log");
-		ImGui::SetWindowSize(ImVec2(600, 300));
+		ImGui::Begin("Output");
+		//ImVec2 vec = ImGui::GetWindowSize();
+
+		const std::list<std::string>& messages = Logger::getBuf();
+		for (auto it = messages.begin(); it != messages.end(); it++) {
+			ImGui::Text(it->c_str());
+		}
+
+		//ImGui::SetWindowSize(ImVec2(600, 300));
+		//std::string s = std::to_string(vec.x) + " " + std::to_string(vec.y);
+		
+		//ImGui::Text(s.c_str());
 		ImGui::End();
+
+
 
 
 		glClearColor(1.0, 1.0, 0.0, 1.0);
 		glClear(GL_COLOR_BUFFER_BIT);
+
+		setKeyState();
+		handleInput();
+		ResourceManager::getInstance().tryUpdate();
+		if (ResourceManager::getInstance().resourcesAreOK()) {
+			drawFrame();	
+		}
+		glFinish();
+
 		ImGui::Render();
 		SDL_GL_SwapWindow(window);	
 
 
 #if 0
-		//setKeyState();
-		//handleInput();
-		//ResourceManager::getInstance().tryUpdate();
+		
 		glClearColor(1.0, 1.0, 0.0, 1.0);
 		glClear(GL_COLOR_BUFFER_BIT);
 
@@ -123,7 +138,7 @@ int main(int argc, char **argv) {
 	ImGui::DestroyContext();
 
 
-	//cleanup();
+	cleanup();
 	SDL_GL_DeleteContext(context);
 	SDL_DestroyWindow(window);
 	SDL_Quit();

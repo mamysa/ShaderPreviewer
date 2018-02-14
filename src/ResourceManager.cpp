@@ -120,7 +120,6 @@ void ShaderResource::tryUpdate() {
 	shader->compile(shadersrc.c_str());
 	if (shader->errorOccured()) {
 		Logger::add("Error updating shader: " + std::string(fileInfo.filename) + "\n");
-		return;
 	}
 
 	for (ShaderProgramResource *res: shaderProgramResources) {

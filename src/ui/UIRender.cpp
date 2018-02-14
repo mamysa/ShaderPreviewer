@@ -22,7 +22,9 @@
 static Uint64       g_Time = 0.0f;
 static bool         g_MousePressed[3] = { false, false, false };
 static GLuint       g_FontTexture = 0;
-static int          g_ShaderHandle = 0, g_VertHandle = 0, g_FragHandle = 0;
+static GLuint programID = 0;
+static GLuint vertShaderID = 0;
+static GLuint fragShaderID = 0;
 
 // uniform locations
 static GLint uLocTexture = 0;
@@ -91,7 +93,7 @@ void ImGui_ImplSdlGL3_RenderDrawLists(ImDrawData* draw_data)
         { 0.0f,                  0.0f,                  -1.0f, 0.0f },
         {-1.0f,                  1.0f,                   0.0f, 1.0f },
     };
-    glUseProgram(g_ShaderHandle);
+    glUseProgram(programID);
     glUniform1i(uLocTexture, 0);
     glUniformMatrix4fv(uLocProjMat, 1, GL_FALSE, &ortho_projection[0][0]);
     glBindVertexArray(vaoID);
@@ -258,22 +260,22 @@ bool ImGui_ImplSdlGL3_CreateDeviceObjects()
         "	Out_Color = Frag_Color * texture( Texture, Frag_UV.st);\n"
         "}\n";
 
-    g_ShaderHandle = glCreateProgram();
-    g_VertHandle = glCreateShader(GL_VERTEX_SHADER);
-    g_FragHandle = glCreateShader(GL_FRAGMENT_SHADER);
-    glShaderSource(g_VertHandle, 1, &vertex_shader, 0);
-    glShaderSource(g_FragHandle, 1, &fragment_shader, 0);
-    glCompileShader(g_VertHandle);
-    glCompileShader(g_FragHandle);
-    glAttachShader(g_ShaderHandle, g_VertHandle);
-    glAttachShader(g_ShaderHandle, g_FragHandle);
-    glLinkProgram(g_ShaderHandle);
+    programID = glCreateProgram();
+    vertShaderID = glCreateShader(GL_VERTEX_SHADER);
+    fragShaderID = glCreateShader(GL_FRAGMENT_SHADER);
+    glShaderSource(vertShaderID, 1, &vertex_shader, 0);
+    glShaderSource(fragShaderID, 1, &fragment_shader, 0);
+    glCompileShader(vertShaderID);
+    glCompileShader(fragShaderID);
+    glAttachShader(programID, vertShaderID);
+    glAttachShader(programID, fragShaderID);
+    glLinkProgram(programID);
 
-    uLocTexture = glGetUniformLocation(g_ShaderHandle, "Texture");
-    uLocProjMat = glGetUniformLocation(g_ShaderHandle, "ProjMtx");
-    aLocPosition = glGetAttribLocation(g_ShaderHandle, "Position");
-    aLocUV = glGetAttribLocation(g_ShaderHandle, "UV");
-    aLocColor = glGetAttribLocation(g_ShaderHandle, "Color");
+    uLocTexture = glGetUniformLocation(programID, "Texture");
+    uLocProjMat = glGetUniformLocation(programID, "ProjMtx");
+    aLocPosition = glGetAttribLocation(programID, "Position");
+    aLocUV = glGetAttribLocation(programID, "UV");
+    aLocColor = glGetAttribLocation(programID, "Color");
 
     glGenBuffers(1, &vboID);
     glGenBuffers(1, &eboID);
@@ -306,16 +308,16 @@ void    ImGui_ImplSdlGL3_InvalidateDeviceObjects()
     if (eboID) glDeleteBuffers(1, &eboID);
     vaoID = vboID = eboID = 0;
 
-    if (g_ShaderHandle && g_VertHandle) glDetachShader(g_ShaderHandle, g_VertHandle);
-    if (g_VertHandle) glDeleteShader(g_VertHandle);
-    g_VertHandle = 0;
+    if (programID && vertShaderID) glDetachShader(programID, vertShaderID);
+    if (vertShaderID) glDeleteShader(vertShaderID);
+    vertShaderID = 0;
 
-    if (g_ShaderHandle && g_FragHandle) glDetachShader(g_ShaderHandle, g_FragHandle);
-    if (g_FragHandle) glDeleteShader(g_FragHandle);
-    g_FragHandle = 0;
+    if (programID && fragShaderID) glDetachShader(programID, fragShaderID);
+    if (fragShaderID) glDeleteShader(fragShaderID);
+    fragShaderID = 0;
 
-    if (g_ShaderHandle) glDeleteProgram(g_ShaderHandle);
-    g_ShaderHandle = 0;
+    if (programID) glDeleteProgram(programID);
+    programID = 0;
 
     if (g_FontTexture)
     {
