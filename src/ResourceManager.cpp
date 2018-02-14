@@ -17,7 +17,7 @@ static HANDLE initializeFileHandle(const char *path) {
 		FILE_ATTRIBUTE_NORMAL, 
 		NULL );
 	if (handle == INVALID_HANDLE_VALUE) {
-		Logger::add("Unable to open file " + std::string(path) + "\n");	
+		Logger::add("Unable to open file " + std::string(path) + "\n", LogType::FAILURE);	
 	}
 	return handle;
 }
@@ -93,7 +93,7 @@ void ShaderProgramResource::tryUpdate(void) {
 	if (requiresRelinking) {
 		program->link(); 
 		if (program->errorOccured()) {
-			Logger::add("Error linking shader program " + std::string(programIdentifier) + "\n");	
+			Logger::add("Error linking shader program " + std::string(programIdentifier) + "\n", LogType::FAILURE);	
 		}
 
 		requiresRelinking = false;
@@ -119,8 +119,11 @@ void ShaderResource::tryUpdate() {
 	std::string shadersrc = readTextFile(fileInfo.filename);
 	shader->compile(shadersrc.c_str());
 	if (shader->errorOccured()) {
-		Logger::add("Error updating shader: " + std::string(fileInfo.filename) + "\n");
-		Logger::add(shader->getErrorMessage());
+		Logger::add("Error updating shader: " + std::string(fileInfo.filename) + "\n", LogType::FAILURE);
+		Logger::add(shader->getErrorMessage(), LogType::INFO);
+	}
+	else {
+		Logger::add("Shader " + std::string(fileInfo.filename) + " compiled successfully!\n", LogType::SUCCESS);
 	}
 
 	for (ShaderProgramResource *res: shaderProgramResources) {

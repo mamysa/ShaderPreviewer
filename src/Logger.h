@@ -3,12 +3,20 @@
 #include <list>
 
 
+enum LogType {
+	SUCCESS,
+	FAILURE, 
+	INFO 	
+};
+
+typedef std::pair<std::string, LogType> LogEntry;
+
 class Logger {
 public:
-	static void add(const std::string&);
-	static const std::list < std::string>& getBuf(void);
+	static void add(const std::string&, LogType);
+	static const std::list <LogEntry>& getBuf(void);
 private:
 	Logger(void);
-	static std::list<std::string> m_buf;
+	static std::list<LogEntry> m_buf;
 
 };

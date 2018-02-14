@@ -66,6 +66,10 @@ int main(int argc, char **argv) {
 
 	SDL_Event event;
 	//wglSwapIntervalEXT(0);
+
+	const ImVec4 ColSuccess(0.039, 0.901, 0.047, 1.0);
+	const ImVec4 ColFailure(0.9, 0.05, 0.05, 1.0);
+	const ImVec4 ColInfo(0.9, 0.9, 0.9, 1.0);
 	while (RUNNING) {
 		while (SDL_PollEvent(&event)) {
 			ImGui_ImplSdlGL3_ProcessEvent(&event);
@@ -80,9 +84,16 @@ int main(int argc, char **argv) {
 		ImGui::Begin("Output");
 		//ImVec2 vec = ImGui::GetWindowSize();
 
-		const std::list<std::string>& messages = Logger::getBuf();
+		const std::list<LogEntry>& messages = Logger::getBuf();
 		for (auto it = messages.begin(); it != messages.end(); it++) {
-			ImGui::Text(it->c_str());
+			ImVec4 color;
+			if (it->second == LogType::FAILURE) color = ColFailure;
+			if (it->second == LogType::SUCCESS) color = ColSuccess;
+			if (it->second == LogType::INFO)    color = ColInfo;
+
+
+
+			ImGui::TextColored(color, it->first.c_str());
 		}
 		//ImGui::SetScrollFromPosY(ImGui::GetScrollMaxY());
 
