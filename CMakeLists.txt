@@ -9,17 +9,22 @@ set (SOURCE_FILES
 	${PROJECT_SOURCE_DIR}/src/opengl/ShaderProgram.cpp
 	${PROJECT_SOURCE_DIR}/src/opengl/Mesh.cpp
 	${PROJECT_SOURCE_DIR}/src/utils/Math.cpp
+	${PROJECT_SOURCE_DIR}/src/ui/UIRender.cpp
+	${PROJECT_SOURCE_DIR}/libs/imgui/imgui_draw.cpp
+	${PROJECT_SOURCE_DIR}/libs/imgui/imgui.cpp
 )
 add_executable(ShaderPreviewV2 ${SOURCE_FILES})
 
 include_directories(${PROJECT_SOURCE_DIR}/libs/SDL2-2.0.5/include/)
 include_directories(${PROJECT_SOURCE_DIR}/libs/glew2.0.0/include/)
+include_directories(${PROJECT_SOURCE_DIR}/libs/imgui/)
 find_package(OPENGL REQUIRED)
 include_directories(${OPENGL_INCLUDE_DIRS})
 
 include_directories(${PROJECT_SOURCE_DIR}/src/)
 include_directories(${PROJECT_SOURCE_DIR}/src/opengl/)
 include_directories(${PROJECT_SOURCE_DIR}/utils/)
+include_directories(${PROJECT_SOURCE_DIR}/ui/)
 
 target_link_libraries(ShaderPreviewV2 ${PROJECT_SOURCE_DIR}/libs/glew2.0.0/lib/x64/glew32.lib)
 target_link_libraries(ShaderPreviewV2 ${OPENGL_LIBRARY})

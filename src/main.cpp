@@ -12,6 +12,9 @@
 #include <windows.h>
 #include <iostream>
 #include <cassert>
+#include "imgui.h"
+#include "ui/UIRender.h"
+
 
 bool g_VALIDGLSTATE = true;
 
@@ -32,9 +35,12 @@ bool STAGE2_SUCCESS = false;
 
 
 int main(int argc, char **argv) {
+	if (SDL_Init(SDL_INIT_VIDEO) != 0) {
+		MessageBox(NULL, "Error initializing SDL", NULL, MB_OK);
+		return 1;
+	}
 		
 	SDL_Window *window = SDL_CreateWindow("", SDL_WINDOWPOS_UNDEFINED, SDL_WINDOWPOS_UNDEFINED, W, H, SDL_WINDOW_OPENGL);
-
 	if (!window) {
 		MessageBox(NULL, "Error initializing SDL window", NULL, MB_OK);
 		return 1;
@@ -53,16 +59,42 @@ int main(int argc, char **argv) {
 		return 1;
 	}
 
-	initialize();
+	//initialize();
 	SDL_ShowWindow(window);
+	ImGui::CreateContext();
+	ImGuiIO& io = ImGui::GetIO(); (void)io;
+	ImGui_ImplSdlGL3_Init(window);
+	ImGui::StyleColorsDark();
 	
-	
+	std::string	mystr("yay\n");
 	SDL_Event event;
 	//wglSwapIntervalEXT(0);
 	while (RUNNING) {
-		setKeyState();
-		handleInput();
-		ResourceManager::getInstance().tryUpdate();
+		while (SDL_PollEvent(&event)) {
+			ImGui_ImplSdlGL3_ProcessEvent(&event);
+			if (event.type == SDL_QUIT) RUNNING = false;
+		}
+
+		//mystr += "yay\n";
+
+
+		ImGui_ImplSdlGL3_NewFrame(window);
+
+		ImGui::Begin("Log");
+		ImGui::SetWindowSize(ImVec2(600, 300));
+		ImGui::End();
+
+
+		glClearColor(1.0, 1.0, 0.0, 1.0);
+		glClear(GL_COLOR_BUFFER_BIT);
+		ImGui::Render();
+		SDL_GL_SwapWindow(window);	
+
+
+#if 0
+		//setKeyState();
+		//handleInput();
+		//ResourceManager::getInstance().tryUpdate();
 		glClearColor(1.0, 1.0, 0.0, 1.0);
 		glClear(GL_COLOR_BUFFER_BIT);
 
@@ -83,13 +115,17 @@ int main(int argc, char **argv) {
 		SDL_SetWindowTitle(window, timestr.c_str());
 
 
-		while (SDL_PollEvent(&event)) {
-			if (event.type == SDL_QUIT) RUNNING = false;
-		}
+		
+	#endif
 	}
 
-	cleanup();
+	ImGui_ImplSdlGL3_Shutdown();
+	ImGui::DestroyContext();
+
+
+	//cleanup();
 	SDL_GL_DeleteContext(context);
 	SDL_DestroyWindow(window);
+	SDL_Quit();
 	return 0;
 }
