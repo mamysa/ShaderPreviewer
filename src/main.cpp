@@ -25,8 +25,8 @@ Vector3 windowResizeEvent = Vector3(800, 600, 0);
 bool RUNNING = true;
 
 
-#define W 800
-#define H 600
+#define W 1280
+#define H 720 
 
 
 int main(int argc, char **argv) {
@@ -36,7 +36,7 @@ int main(int argc, char **argv) {
 		return 1;
 	}
 		
-	SDL_Window *window = SDL_CreateWindow("", SDL_WINDOWPOS_UNDEFINED, SDL_WINDOWPOS_UNDEFINED, W, H, SDL_WINDOW_OPENGL);
+	SDL_Window *window = SDL_CreateWindow("", SDL_WINDOWPOS_UNDEFINED, SDL_WINDOWPOS_UNDEFINED, W, H, SDL_WINDOW_OPENGL|SDL_WINDOW_RESIZABLE);
 	if (!window) {
 		MessageBox(NULL, "Error initializing SDL window", NULL, MB_OK);
 		return 1;
@@ -76,10 +76,13 @@ int main(int argc, char **argv) {
 			if (event.type == SDL_QUIT) RUNNING = false;
 		}
 
-		//mystr += "yay\n";
 
+		//mystr += "yay\n";
+		//ImGuiStyle& style = ImGui::GetStyle();
+		//style.Colors[ImGuiCol_WindowBg] = ImVec4(0.10f, 0.10f, 0.10f, 1.00f);
 
 		ImGui_ImplSdlGL3_NewFrame(window);
+
 
 		ImGui::Begin("Output");
 		//ImVec2 vec = ImGui::GetWindowSize();
@@ -96,6 +99,7 @@ int main(int argc, char **argv) {
 			ImGui::TextColored(color, it->first.c_str());
 		}
 		//ImGui::SetScrollFromPosY(ImGui::GetScrollMaxY());
+
 
 		//ImGui::SetWindowSize(ImVec2(600, 300));
 		//std::string s = std::to_string(vec.x) + " " + std::to_string(vec.y);
@@ -114,6 +118,9 @@ int main(int argc, char **argv) {
 		}
 		glFinish();
 
+		int w, h;
+		SDL_GetWindowSize(window, &w, &h);
+		glViewport(0, 0, w, h);
 		ImGui::Render();
 		SDL_GL_SwapWindow(window);	
 
