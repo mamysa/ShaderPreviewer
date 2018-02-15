@@ -16,6 +16,8 @@
 #include "ui/UIRender.h"
 #include "Logger.h"
 
+#include "ui/UI.h"
+
 
 
 
@@ -28,8 +30,13 @@ bool RUNNING = true;
 #define W 1280
 #define H 720 
 
+int w, h;
+
+ImVec2 outputsize;
 
 int main(int argc, char **argv) {
+	w = W;
+	h = H;
 	FreeConsole();
 	if (SDL_Init(SDL_INIT_VIDEO) != 0) {
 		MessageBox(NULL, "Error initializing SDL", NULL, MB_OK);
@@ -76,38 +83,11 @@ int main(int argc, char **argv) {
 			if (event.type == SDL_QUIT) RUNNING = false;
 		}
 
-
-		//mystr += "yay\n";
-		//ImGuiStyle& style = ImGui::GetStyle();
-		//style.Colors[ImGuiCol_WindowBg] = ImVec4(0.10f, 0.10f, 0.10f, 1.00f);
-
+		SDL_GetWindowSize(window, &w, &h);
 		ImGui_ImplSdlGL3_NewFrame(window);
+		makeUI(w, h);
 
-
-		ImGui::Begin("Output");
-		//ImVec2 vec = ImGui::GetWindowSize();
-
-		const std::list<LogEntry>& messages = Logger::getBuf();
-		for (auto it = messages.begin(); it != messages.end(); it++) {
-			ImVec4 color;
-			if (it->second == LogType::FAILURE) color = ColFailure;
-			if (it->second == LogType::SUCCESS) color = ColSuccess;
-			if (it->second == LogType::INFO)    color = ColInfo;
-
-
-
-			ImGui::TextColored(color, it->first.c_str());
-		}
-		//ImGui::SetScrollFromPosY(ImGui::GetScrollMaxY());
-
-
-		//ImGui::SetWindowSize(ImVec2(600, 300));
-		//std::string s = std::to_string(vec.x) + " " + std::to_string(vec.y);
-		
-		//ImGui::Text(s.c_str());
-		ImGui::End();
-
-		glClearColor(1.0, 1.0, 0.0, 1.0);
+		glClearColor(0.05, 0.05, 0.05, 1.0);
 		glClear(GL_COLOR_BUFFER_BIT);
 
 		setKeyState();
@@ -118,9 +98,7 @@ int main(int argc, char **argv) {
 		}
 		glFinish();
 
-		int w, h;
-		SDL_GetWindowSize(window, &w, &h);
-		glViewport(0, 0, w, h);
+		//glViewport(0, 0, w, h);
 		ImGui::Render();
 		SDL_GL_SwapWindow(window);	
 
