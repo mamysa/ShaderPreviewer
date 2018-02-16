@@ -4,6 +4,7 @@
 #include "ResourceManager.h"
 #include "opengl/ShaderProgram.h"
 #include "opengl/Mesh.h"
+#include "opengl/Texture.h"
 #include "Input.h"
 #include "utils/Math.h"
 #include <cassert>
@@ -18,14 +19,11 @@ Matrix3 gCameraOrientation;
 Vector3 gMouseCoordinates;
 unsigned ticks = 0;
 
-GLuint  noiseTexture1ID;
-GLuint  depthBuffer1ID; 
-
-GLuint sceneTexture2ID;
-
-GLuint bloomTexture1ID;
-GLuint bloomTexture2ID;
-GLuint finalTextureID;
+// textures
+Texture2D *sceneTexture2ID = nullptr;
+Texture2D *bloomTexture1ID = nullptr;
+Texture2D *bloomTexture2ID = nullptr;
+Texture2D *finalTextureID = nullptr;
 
 GLuint  framebuffer1ID;
 GLuint  framebuffer2ID;
@@ -79,6 +77,7 @@ bool initialize() {
 		combinerProgramPath
 	};
 
+
 	shaderWatcher.addShaderProgramResource(noiseGenProgram);
 	shaderWatcher.addShaderProgramResource(mainProgramAST);
 	shaderWatcher.addShaderProgramResource(fxaaProgramAST);
@@ -93,59 +92,36 @@ bool initialize() {
 	mainProgram = r2->program;
 	fxaaProgram = r3->program;
 	combinerProgram = r4->program;
+
+
+	ASTNodeTexture2D sceneTextureAST = { "scene_texture", W, H };
+	ASTNodeTexture2D bloomTexture1AST = { "bloom1_texture", W, H };
+	ASTNodeTexture2D bloomTexture2AST = { "bloom2_texture", W, H };
+	ASTNodeTexture2D finalTextureAST = { "final_texture", W, H };
+
+	shaderWatcher.addTextureResource(sceneTextureAST);
+	shaderWatcher.addTextureResource(bloomTexture1AST);
+	shaderWatcher.addTextureResource(bloomTexture2AST);
+	shaderWatcher.addTextureResource(finalTextureAST);
+	
+	Texture2DResource *t1 = (Texture2DResource*)shaderWatcher.lookupResource(std::string(sceneTextureAST.identifier));
+	Texture2DResource *t2 = (Texture2DResource*)shaderWatcher.lookupResource(std::string(bloomTexture1AST.identifier));
+	Texture2DResource *t3 = (Texture2DResource*)shaderWatcher.lookupResource(std::string(bloomTexture2AST.identifier));
+	Texture2DResource *t4 = (Texture2DResource*)shaderWatcher.lookupResource(std::string(finalTextureAST.identifier));
+
+	sceneTexture2ID = t1->texture;
+	bloomTexture1ID = t2->texture;
+	bloomTexture2ID = t3->texture;
+	finalTextureID = t4->texture;
 	
 
 	screenQuad = createQuad();
-
 	// initialize textures
 
-	glGenTextures(1, &depthBuffer1ID);
-	glBindTexture(GL_TEXTURE_2D, depthBuffer1ID);
-	glTexImage2D(GL_TEXTURE_2D, 0, GL_DEPTH_COMPONENT, NOISETEXSIZE, NOISETEXSIZE, 0, GL_DEPTH_COMPONENT, GL_FLOAT, 0);
-	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
-	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
-	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
-	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
-	glBindTexture(GL_TEXTURE_2D, 0);
 
+	
 
-	// textures for main scene
-	glGenTextures(1, &sceneTexture2ID);
-	glBindTexture(GL_TEXTURE_2D, sceneTexture2ID);
-	glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA32F, W, H, 0, GL_RGBA, GL_FLOAT, 0);
-	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
-	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
-	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
-	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
-	glBindTexture(GL_TEXTURE_2D, 0);
-
-	// textures for bloom pass 
-	glGenTextures(1, &bloomTexture1ID);
-	glBindTexture(GL_TEXTURE_2D, bloomTexture1ID);
-	glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA32F, W, H, 0, GL_RGBA, GL_FLOAT, 0);
-	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
-	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
-	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
-	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
-	glBindTexture(GL_TEXTURE_2D, 0);
-
-	glGenTextures(1, &bloomTexture2ID);
-	glBindTexture(GL_TEXTURE_2D, bloomTexture2ID);
-	glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA32F, W, H, 0, GL_RGBA, GL_FLOAT, 0);
-	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
-	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
-	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
-	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
-	glBindTexture(GL_TEXTURE_2D, 0);
-
-	glGenTextures(1, &finalTextureID);
-	glBindTexture(GL_TEXTURE_2D, finalTextureID);
-	glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA32F, W, H, 0, GL_RGBA, GL_FLOAT, 0);
-	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
-	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
-	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
-	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
-	glBindTexture(GL_TEXTURE_2D, 0);
+	
 
 
 	// initialize framebuffers
@@ -155,10 +131,11 @@ bool initialize() {
 	glGenFramebuffers(1, &bloomFramebuffer2ID);
 	glGenFramebuffers(1, &finalFramebufferID);
 
+
+	setupFrameBuffers();
 	assert(glGetError() == GL_NO_ERROR);
 
 
-	setupFrameBuffers();
 
 	assert(glGetError() == GL_NO_ERROR);
 	return initSuccessful;
@@ -166,7 +143,7 @@ bool initialize() {
 
 void setupFrameBuffers() {
 	glBindFramebuffer(GL_FRAMEBUFFER, framebuffer2ID);
-	glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D, sceneTexture2ID, 0);
+	glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D, sceneTexture2ID->getID(), 0);
 	glDrawBuffer(GL_COLOR_ATTACHMENT0);
 	glReadBuffer(GL_NONE);
 	if (glCheckFramebufferStatus(GL_FRAMEBUFFER) != GL_FRAMEBUFFER_COMPLETE) { std::cout << "framebuffer2 incomplete"; }
@@ -174,14 +151,14 @@ void setupFrameBuffers() {
 
 
 	glBindFramebuffer(GL_FRAMEBUFFER, bloomFramebuffer1ID);
-	glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D, bloomTexture1ID, 0);
+	glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D, bloomTexture1ID->getID(), 0);
 	glDrawBuffer(GL_COLOR_ATTACHMENT0);
 	glReadBuffer(GL_NONE);
 	if (glCheckFramebufferStatus(GL_FRAMEBUFFER) != GL_FRAMEBUFFER_COMPLETE) { std::cout << "bloomFramebuffer1 incomplete"; }
 	glBindFramebuffer(GL_FRAMEBUFFER, 0);
 
 	glBindFramebuffer(GL_FRAMEBUFFER, bloomFramebuffer2ID);
-	glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D, bloomTexture2ID, 0);
+	glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D, bloomTexture2ID->getID(), 0);
 	glDrawBuffer(GL_COLOR_ATTACHMENT0);
 	glReadBuffer(GL_NONE);
 	if (glCheckFramebufferStatus(GL_FRAMEBUFFER) != GL_FRAMEBUFFER_COMPLETE) { std::cout << "bloomFramebuffer2 incomplete"; }
@@ -189,7 +166,7 @@ void setupFrameBuffers() {
 
 
 	glBindFramebuffer(GL_FRAMEBUFFER, finalFramebufferID);
-	glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D, finalTextureID, 0);
+	glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D, finalTextureID->getID(), 0);
 	glDrawBuffer(GL_COLOR_ATTACHMENT0);
 	glReadBuffer(GL_NONE);
 	if (glCheckFramebufferStatus(GL_FRAMEBUFFER) != GL_FRAMEBUFFER_COMPLETE) { std::cout << "finalFramebuffer incomplete"; }
@@ -204,7 +181,9 @@ void resizeTextures(int width, int height) {
 }
 
 void drawFrame() {
+
 	float tickf = ((float)ticks) * 0.1;
+	assert(glGetError() == GL_NO_ERROR);
 	screenQuad->setupAttributes(*mainProgram);
 
 	//render main scene
@@ -228,12 +207,11 @@ void drawFrame() {
 		fxaaProgram->uniform("iResolution", Vector3(W,H,0));
 		fxaaProgram->uniform("u_texture", 1);
 		fxaaProgram->uniform("blur_direction", 0);
-		glActiveTexture(GL_TEXTURE1);
-		glBindTexture(GL_TEXTURE_2D, sceneTexture2ID);
+		glActiveTexture(GL_TEXTURE1); sceneTexture2ID->bind();
 		screenQuad->bind();
 		screenQuad->draw();
 		screenQuad->bind(0);
-		glBindTexture(GL_TEXTURE_2D, 0);
+		sceneTexture2ID->bind(0);
 	fxaaProgram->use(0);
 	glBindFramebuffer(GL_FRAMEBUFFER, 0);
 
@@ -244,33 +222,34 @@ void drawFrame() {
 		fxaaProgram->uniform("iResolution", Vector3(W,H,0));
 		fxaaProgram->uniform("u_texture", 2);
 		fxaaProgram->uniform("blur_direction", 1);
-		glActiveTexture(GL_TEXTURE2);
-		glBindTexture(GL_TEXTURE_2D, bloomTexture1ID);
+		glActiveTexture(GL_TEXTURE2); bloomTexture1ID->bind();
 		screenQuad->bind();
 		screenQuad->draw();
 		screenQuad->bind(0);
-		glBindTexture(GL_TEXTURE_2D, 0);
+		bloomTexture1ID->bind(0);
 	fxaaProgram->use(0);
 	glBindFramebuffer(GL_FRAMEBUFFER, 0);
+
+	assert(glGetError() == GL_NO_ERROR);
 
 	glBindFramebuffer(GL_FRAMEBUFFER, finalFramebufferID);
 	combinerProgram->use();
 		combinerProgram->uniform("u_texture2", 1);
 		combinerProgram->uniform("u_texture1", 2);
-		glActiveTexture(GL_TEXTURE1); glBindTexture(GL_TEXTURE_2D, sceneTexture2ID);
-		glActiveTexture(GL_TEXTURE2); glBindTexture(GL_TEXTURE_2D, bloomTexture1ID);
+		glActiveTexture(GL_TEXTURE1); sceneTexture2ID->bind(); 
+		glActiveTexture(GL_TEXTURE2); bloomTexture2ID->bind(); 
 		screenQuad->bind();
 		screenQuad->draw();
 		screenQuad->bind(0);
-		glActiveTexture(GL_TEXTURE1); glBindTexture(GL_TEXTURE_2D, 0);
-		glActiveTexture(GL_TEXTURE2); glBindTexture(GL_TEXTURE_2D, 0);
+		glActiveTexture(GL_TEXTURE1); sceneTexture2ID->bind(0); 
+		glActiveTexture(GL_TEXTURE2); bloomTexture2ID->bind(0); 
 	combinerProgram->use(0);
 	glBindFramebuffer(GL_FRAMEBUFFER, 0);
 
 	ImGui::PushStyleColor(ImGuiCol_WindowBg, ImVec4(1.0,1.0,1.0,1.0));
 	//ImGui::PushStyleVar(ImGuiStyleVar, 0.0);
 	ImGui::Begin("Viewport");
-	ImGui::Image((ImTextureID)finalTextureID, ImVec2(W*0.5,H*0.5),ImVec2(0, 1), ImVec2(1, 0) );
+	ImGui::Image((ImTextureID)finalTextureID->getID(), ImVec2(W*0.5,H*0.5),ImVec2(0, 1), ImVec2(1, 0) );
 	ImGui::End();
 	//ImGui::PopStyleVar();
 	ImGui::PopStyleColor();
@@ -281,16 +260,7 @@ void drawFrame() {
 void cleanup() {
 	ResourceManager& shaderWatcher = ResourceManager::getInstance();
 	shaderWatcher.removeAllResources();
-	delete fxaaProgram;
-	delete mainProgram;
-	delete noiseGeneratorProgram;
 	delete screenQuad;
-	glDeleteTextures(1, &noiseTexture1ID);
-	glDeleteTextures(1, &depthBuffer1ID);
-	glDeleteTextures(1, &sceneTexture2ID);
-	glDeleteTextures(1, &bloomTexture1ID);
-	glDeleteTextures(1, &bloomTexture2ID);
-	glDeleteTextures(1, &finalTextureID);
 	glDeleteFramebuffers(1, &framebuffer1ID);
 	glDeleteFramebuffers(1, &framebuffer2ID);
 	glDeleteFramebuffers(1, &bloomFramebuffer1ID);

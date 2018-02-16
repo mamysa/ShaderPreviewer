@@ -3,6 +3,7 @@
 #include <fstream>
 #include "ResourceManager.h"
 #include "opengl/ShaderProgram.h"
+#include "opengl/Texture.h"
 #include "Logger.h"
 
 
@@ -136,6 +137,26 @@ bool ShaderResource::isOK(void) {
 }
 
 //=============================================
+// Texture2DResouce class implementation
+//=============================================
+
+Texture2DResource::Texture2DResource(unsigned width, unsigned height) :
+	texture(new Texture2D(width, height))
+{ }
+
+Texture2DResource::~Texture2DResource(void) {
+	delete texture;
+}
+
+void Texture2DResource::tryUpdate(void) {
+// do not need to update it for now, until we start loading textures from images...
+}
+
+bool Texture2DResource::isOK(void) {
+	return texture->getID() != 0;
+}
+
+//=============================================
 // ResourceManager class implementation
 //=============================================
 ResourceManager::ResourceManager() { }
@@ -171,6 +192,11 @@ void ResourceManager::addShaderProgramResource(const ASTNodeShaderProgram& progI
 	m_resourceList.insert(std::pair<std::string, BaseResource *>(std::string(progInfo.identifier), resource));
 }
 
+void ResourceManager::addTextureResource(const ASTNodeTexture2D& info) {
+	Texture2DResource *resource = new Texture2DResource(info.width, info.height);
+	std::pair<std::string, BaseResource *> entry(std::string(info.identifier), resource);
+	m_resourceList.insert(entry);
+}
 
 void ResourceManager::tryUpdate(void) {
 	for (auto it = m_resourceList.begin(); it != m_resourceList.end(); it++)

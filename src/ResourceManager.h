@@ -11,6 +11,7 @@
 class GLShaderProgram;
 class GLShader;
 class ShaderProgramResource;
+class Texture2D;
 
 struct ShaderInfo {
 #ifdef _WIN32
@@ -45,7 +46,6 @@ public:
 	std::vector<ShaderProgramResource *> shaderProgramResources;
 
 	ShaderResource(const char *, GLenum);
-
 	void tryUpdate(void);
 	bool isOK(void);
 };
@@ -62,6 +62,16 @@ public:
 	bool isOK(void);
 };
 
+class Texture2DResource: public BaseResource {
+public:
+	Texture2D *texture;
+	Texture2DResource(unsigned, unsigned);
+	~Texture2DResource(void);
+
+	void tryUpdate(void);
+	bool isOK(void);
+};
+
 // TODO this should not be here either, will be moved to parser module eventually.
 // FIXME may potentially cause memleaks!
 struct ASTNodeShaderProgram {
@@ -70,6 +80,12 @@ struct ASTNodeShaderProgram {
 	const char *fragShaderPath;
 };
 
+//FIXME this should not be here either
+struct ASTNodeTexture2D {
+	const char *identifier;
+	unsigned width;
+	unsigned height;
+};
 
 //=============================================
 // ResourceManager class 
@@ -85,6 +101,7 @@ private:
 public:
 	static ResourceManager& getInstance();
 	void addShaderProgramResource(const ASTNodeShaderProgram&);
+	void addTextureResource(const ASTNodeTexture2D&);
 	void tryUpdate(void);
 	bool resourcesAreOK(void);
 	void removeAllResources(void);
