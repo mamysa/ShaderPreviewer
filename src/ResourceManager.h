@@ -13,14 +13,11 @@ class GLShader;
 class ShaderProgramResource;
 class Texture2D;
 
-struct ShaderInfo {
-#ifdef _WIN32
-	HANDLE shaderHandle;
-	FILETIME lastUpdateTime;
-	const char *pathToShader;
-#endif
-	GLenum shaderType;
-	GLShaderProgram *shaderProgram;		
+enum ResourceType {
+	R_Base,
+	R_Shader,
+	R_ShaderProgram, 
+	R_Texture2D
 };
 
 struct FileInfo {
@@ -35,12 +32,14 @@ struct FileInfo {
 
 class BaseResource {
 public:
+	const ResourceType resourceType = R_Base;
 	virtual void tryUpdate(void) = 0;
 	virtual bool isOK(void) = 0;
 };
 
 class ShaderResource: public BaseResource {
 public: 
+	const ResourceType resourceType = R_Shader;
 	FileInfo fileInfo;
 	GLShader *shader;
 	std::vector<ShaderProgramResource *> shaderProgramResources;
@@ -52,6 +51,7 @@ public:
 
 class ShaderProgramResource: public BaseResource {
 public:
+	const ResourceType resourceType = R_ShaderProgram;
 	const char *programIdentifier;
 	GLShaderProgram *program;
 	bool requiresRelinking;
@@ -64,6 +64,7 @@ public:
 
 class Texture2DResource: public BaseResource {
 public:
+	const ResourceType resourceType = R_Texture2D;
 	Texture2D *texture;
 	Texture2DResource(unsigned, unsigned);
 	~Texture2DResource(void);
