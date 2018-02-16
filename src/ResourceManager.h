@@ -31,15 +31,17 @@ struct FileInfo {
 };
 
 class BaseResource {
+private:
+	ResourceType m_resourceType;
 public:
-	const ResourceType resourceType = R_Base;
+	BaseResource(ResourceType type): m_resourceType(type) { }
 	virtual void tryUpdate(void) = 0;
 	virtual bool isOK(void) = 0;
+	ResourceType getType(void) { return m_resourceType; }
 };
 
 class ShaderResource: public BaseResource {
 public: 
-	const ResourceType resourceType = R_Shader;
 	FileInfo fileInfo;
 	GLShader *shader;
 	std::vector<ShaderProgramResource *> shaderProgramResources;
@@ -51,7 +53,6 @@ public:
 
 class ShaderProgramResource: public BaseResource {
 public:
-	const ResourceType resourceType = R_ShaderProgram;
 	const char *programIdentifier;
 	GLShaderProgram *program;
 	bool requiresRelinking;
@@ -64,9 +65,9 @@ public:
 
 class Texture2DResource: public BaseResource {
 public:
-	const ResourceType resourceType = R_Texture2D;
+	std::string identifier;
 	Texture2D *texture;
-	Texture2DResource(unsigned, unsigned);
+	Texture2DResource(std::string&, unsigned, unsigned);
 	~Texture2DResource(void);
 
 	void tryUpdate(void);
@@ -107,6 +108,10 @@ public:
 	bool resourcesAreOK(void);
 	void removeAllResources(void);
 	BaseResource * lookupResource(std::string&);
+
+	// FIXME quick hack as I don't feel like implementing the iterator for this atm
+	const std::map<std::string, BaseResource *> getResources(void) { return m_resourceList; }
+
 };
 
 std::string readTextFile(const char *);

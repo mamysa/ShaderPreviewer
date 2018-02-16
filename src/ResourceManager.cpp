@@ -80,6 +80,7 @@ FileInfo::~FileInfo(void) {
 // ShaderProgramResource implementation
 //=============================================
 ShaderProgramResource::ShaderProgramResource(const char *ident) :
+	BaseResource(R_ShaderProgram),
 	programIdentifier(ident),
 	program(new GLShaderProgram()), 
 	requiresRelinking(false)
@@ -110,6 +111,7 @@ bool ShaderProgramResource ::isOK(void) {
 //=============================================
 
 ShaderResource::ShaderResource(const char *filename, GLenum type): 
+	BaseResource(R_Shader),
 	fileInfo(filename), 
 	shader(new GLShader(type))   { }
 
@@ -140,7 +142,9 @@ bool ShaderResource::isOK(void) {
 // Texture2DResouce class implementation
 //=============================================
 
-Texture2DResource::Texture2DResource(unsigned width, unsigned height) :
+Texture2DResource::Texture2DResource(std::string& ident, unsigned width, unsigned height) :
+	BaseResource(R_Texture2D),
+	identifier(ident),
 	texture(new Texture2D(width, height))
 { }
 
@@ -193,7 +197,7 @@ void ResourceManager::addShaderProgramResource(const ASTNodeShaderProgram& progI
 }
 
 void ResourceManager::addTextureResource(const ASTNodeTexture2D& info) {
-	Texture2DResource *resource = new Texture2DResource(info.width, info.height);
+	Texture2DResource *resource = new Texture2DResource(std::string(info.identifier), info.width, info.height);
 	std::pair<std::string, BaseResource *> entry(std::string(info.identifier), resource);
 	m_resourceList.insert(entry);
 }
