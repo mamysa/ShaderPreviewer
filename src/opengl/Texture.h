@@ -12,4 +12,6 @@ public:
 	~Texture2D(void);
 	void bind(int=1) const;
 	GLuint getID(void) const; 
+	GLuint getW(void) const { return m_width; }
+	GLuint getH(void) const { return m_height; }
 };

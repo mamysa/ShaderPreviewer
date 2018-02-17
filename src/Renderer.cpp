@@ -246,14 +246,6 @@ void drawFrame() {
 	combinerProgram->use(0);
 	glBindFramebuffer(GL_FRAMEBUFFER, 0);
 
-	ImGui::PushStyleColor(ImGuiCol_WindowBg, ImVec4(1.0,1.0,1.0,1.0));
-	//ImGui::PushStyleVar(ImGuiStyleVar, 0.0);
-	ImGui::Begin("Viewport");
-	ImGui::Image((ImTextureID)finalTextureID->getID(), ImVec2(W*0.5,H*0.5),ImVec2(0, 1), ImVec2(1, 0) );
-	ImGui::End();
-	//ImGui::PopStyleVar();
-	ImGui::PopStyleColor();
-
 	ticks++;
 }
 
