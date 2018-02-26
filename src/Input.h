@@ -1,5 +1,4 @@
 #pragma once
-#include <Windows.h>
 
 enum KeyboardMap {
 	KEY_LEFT = 0,

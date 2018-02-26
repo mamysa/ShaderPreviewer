@@ -1,6 +1,14 @@
 #pragma once 
 #include "GL/glew.h"
+
+#ifdef IS_WINDOWS
 #include <GL/gl.h>
+#endif
+
+#ifdef IS_OSX
+#include <OpenGL/gl.h>
+#endif
+
 #include "utils/Math.h"
 #include "string"
 

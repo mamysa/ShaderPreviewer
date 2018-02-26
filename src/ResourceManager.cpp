@@ -7,8 +7,7 @@
 #include "Logger.h"
 
 
-#ifdef _WIN32
-// get handle for file.
+#ifdef IS_WINDOWS 
 static HANDLE initializeFileHandle(const char *path) {
 	HANDLE handle = CreateFile( path, 
 		GENERIC_READ,  
@@ -24,10 +23,10 @@ static HANDLE initializeFileHandle(const char *path) {
 }
 #endif
 
-#ifdef _WIN32
 // Query timestamp and return true if lastModified time is newer than the one
 // stored in the info struct.
 static bool checkandUpdateTimestamp(FileInfo& info) {
+#ifdef IS_WINDOWS 
 	FILETIME time; 
 	bool status = GetFileTime(info.handle, NULL, NULL, &time);
 	FILETIME *t = &info.lastUpdateTime;
@@ -38,8 +37,12 @@ static bool checkandUpdateTimestamp(FileInfo& info) {
 	}
 
 	return false;
-}
 #endif
+
+#ifdef IS_OSX
+	return false;
+#endif
+}
 
 // IO function. This should not be here at all!  @FIXME
 std::string readTextFile(const char *path) {
@@ -62,18 +65,28 @@ std::string readTextFile(const char *path) {
 // FileInfo struct implementation 
 //=============================================
 FileInfo::FileInfo(const char *f) :
+#ifdef IS_WINDOWS
 	handle(initializeFileHandle(f)), 
 	lastUpdateTime({0, 0}),
+#endif
 	filename(f)
 { }
 
 bool FileInfo::isOK(void) {
+#ifdef IS_WINDOWS
 	return handle != INVALID_HANDLE_VALUE;	
+#endif
+
+#ifdef IS_OSX
+	return false;
+#endif
 }
 
 FileInfo::~FileInfo(void) {
+#if IS_WINDOWS
 	if (isOK())
 		CloseHandle(handle);		
+#endif
 }
 
 //=============================================
@@ -197,7 +210,8 @@ void ResourceManager::addShaderProgramResource(const ASTNodeShaderProgram& progI
 }
 
 void ResourceManager::addTextureResource(const ASTNodeTexture2D& info) {
-	Texture2DResource *resource = new Texture2DResource(std::string(info.identifier), info.width, info.height);
+	std::string ident(info.identifier);
+	Texture2DResource *resource = new Texture2DResource(ident, info.width, info.height);
 	std::pair<std::string, BaseResource *> entry(std::string(info.identifier), resource);
 	m_resourceList.insert(entry);
 }

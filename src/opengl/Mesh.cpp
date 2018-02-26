@@ -1,7 +1,6 @@
 #include <cassert>
 #include "Mesh.h"
 #include "ShaderProgram.h"
-#include <Windows.h>
 
 
 //=============================================
@@ -122,7 +121,14 @@ const GLuint QUAD_EBO[QUAD_EBOLENGTH] = { 0, 1, 3, 0, 3, 2 };
 GLMesh * createQuad(void) {
 	GLfloat *vbo = new GLfloat[QUAD_VBOLENGTH];
 	GLuint  *ebo = new  GLuint[QUAD_EBOLENGTH];
+#ifdef IS_WINDOWS
 	CopyMemory(vbo, QUAD_VBO, QUAD_VBOLENGTH*sizeof(GLfloat));
 	CopyMemory(ebo, QUAD_EBO, QUAD_EBOLENGTH*sizeof(GLuint));
+#endif
+
+#ifdef IS_OSX
+	std::memcpy(vbo, QUAD_VBO, QUAD_VBOLENGTH*sizeof(GLfloat));	
+	std::memcpy(ebo, QUAD_EBO, QUAD_EBOLENGTH*sizeof(GLuint));	
+#endif 
 	return new GLMesh(vbo, ebo, QUAD_VBOLENGTH, QUAD_EBOLENGTH);
 }

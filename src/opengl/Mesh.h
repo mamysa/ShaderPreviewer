@@ -1,6 +1,13 @@
 #pragma once
 #include "GL/glew.h"
+#ifdef IS_WINDOWS
 #include <GL/gl.h>
+#include <windows.h>
+#endif
+
+#ifdef IS_OSX
+#include <OpenGL/gl.h>
+#endif
 
 class GLShaderProgram;
 

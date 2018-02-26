@@ -1,7 +1,17 @@
 #include "GL/glew.h"
-#include "GL/wglew.h"
+
+#ifdef IS_WINDOWS
 #include <GL/gl.h>
 #include "SDL.h"
+#include <windows.h>
+#endif
+
+#ifdef IS_OSX
+#include <OpenGL/gl.h>
+#include <SDL2/SDL.h>
+#endif
+
+
 #include "opengl/ShaderProgram.h"
 #include "opengl/Mesh.h"
 #include "ResourceManager.h"
@@ -9,14 +19,13 @@
 #include "Input.h"
 #include "Renderer.h"
 #include <chrono>
-#include <windows.h>
 #include <iostream>
 #include <cassert>
 #include <string>
 #include "imgui.h"
+#include "ui/UI.h"
 #include "ui/UIRender.h"
 #include "Logger.h"
-#include "ui/UI.h"
 
 #define W 1280
 #define H 720 
@@ -34,15 +43,27 @@ static std::string getGLVersion(void) {
 int main(int argc, char **argv) {
 	w = W;
 	h = H;
+#ifdef IS_WINDOWS
 	FreeConsole();
+#endif
 	if (SDL_Init(SDL_INIT_VIDEO) != 0) {
+#ifdef IS_WINDOWS
 		MessageBox(NULL, "Error initializing SDL", NULL, MB_OK);
+#endif
+#ifdef IS_OSX
+		std::cout << "Error initializing SDL\n";
+#endif
 		return 1;
 	}
 		
 	SDL_Window *window = SDL_CreateWindow("", SDL_WINDOWPOS_UNDEFINED, SDL_WINDOWPOS_UNDEFINED, W, H, SDL_WINDOW_OPENGL|SDL_WINDOW_RESIZABLE);
 	if (!window) {
+#ifdef IS_WINDOWS
 		MessageBox(NULL, "Error initializing SDL window", NULL, MB_OK);
+#endif
+#ifdef IS_OSX
+		std::cout << "Error initializing SDL window\n";
+#endif
 		return 1;
 	}
 
@@ -54,7 +75,12 @@ int main(int argc, char **argv) {
 	
 
 	if (glewInit() != GLEW_OK) {
+#ifdef IS_WINDOWS
 		MessageBox(NULL, "Error initializing glew", NULL, MB_OK);
+#endif
+#ifdef IS_OSX
+		std::cout << "Error initializing glew\n";
+#endif
 		return 1;
 	}
 

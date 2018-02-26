@@ -1,5 +1,12 @@
 #include "Input.h"
+
+#ifdef IS_WINDOWS
 #include "SDL.h"
+#endif
+
+#ifdef IS_OSX
+#include <SDL2/SDL.h>
+#endif
 
 bool keys[11] = { false };
 

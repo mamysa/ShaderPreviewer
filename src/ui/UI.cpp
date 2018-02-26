@@ -73,7 +73,7 @@ static void makeTextureWindow(int fbw, int fbh) {
 	ImGui::End();
 }
 
-void makeViewport(int fbw, int fbh) {
+static void makeViewport(int fbw, int fbh) {
 	if (currentTextureSelection == -1) {
 		return;
 	}
@@ -89,7 +89,6 @@ void makeViewport(int fbw, int fbh) {
 }
 
 void makeUI(int fbw, int fbh) {
-	//makeControlWindow(fbw, fbh);
 	makeTextureWindow(fbw, fbh);
 	makeLogWindow(fbw, fbh);
 	makeViewport(fbw, fbh);

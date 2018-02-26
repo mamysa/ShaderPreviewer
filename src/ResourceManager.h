@@ -1,8 +1,15 @@
 #pragma once
 
 #include "GL/glew.h"
+#ifdef IS_WINDOWS
 #include <gl/GL.h>
-#include <Windows.h>
+#include <windows.h>
+#endif
+
+#ifdef IS_OSX
+#include <OpenGL/gl.h>
+#endif
+
 #include <string>
 #include <vector>
 #include <map>
@@ -21,8 +28,10 @@ enum ResourceType {
 };
 
 struct FileInfo {
+#ifdef IS_WINDOWS
 	HANDLE  handle;
 	FILETIME lastUpdateTime;
+#endif
 	const char *filename;
 	FileInfo(const char *);
 

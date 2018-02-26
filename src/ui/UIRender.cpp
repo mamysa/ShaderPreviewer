@@ -14,8 +14,14 @@
 #include "UIRender.h"
 
 // SDL,GL3W
+#ifdef IS_WINDOWS
 #include <SDL.h>
 #include <SDL_syswm.h>
+#endif
+#ifdef IS_OSX
+#include <SDL2/SDL.h>
+#include <SDL2/SDL_syswm.h>
+#endif
 #include "GL/glew.h"    // This example is using gl3w to access OpenGL functions (because it is small). You may use glew/glad/glLoadGen/etc. whatever already works for you.
 
 // Data

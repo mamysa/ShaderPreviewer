@@ -1,5 +1,12 @@
 #include "GL/glew.h"
+#ifdef IS_WINDOWS
 #include <GL/gl.h>
+#endif
+
+#ifdef IS_OSX
+#include <OpenGL/gl.h>
+#endif
+
 #include "Renderer.h"
 #include "ResourceManager.h"
 #include "opengl/ShaderProgram.h"
@@ -83,10 +90,16 @@ bool initialize() {
 	shaderWatcher.addShaderProgramResource(fxaaProgramAST);
 	shaderWatcher.addShaderProgramResource(combinerProgramAST);
 
-	ShaderProgramResource *r1 = (ShaderProgramResource*)shaderWatcher.lookupResource(std::string(noiseGenProgram.identifier));
-	ShaderProgramResource *r2 = (ShaderProgramResource*)shaderWatcher.lookupResource(std::string(mainProgramAST.identifier));
-	ShaderProgramResource *r3 = (ShaderProgramResource*)shaderWatcher.lookupResource(std::string(fxaaProgramAST.identifier));
-	ShaderProgramResource *r4 = (ShaderProgramResource*)shaderWatcher.lookupResource(std::string(combinerProgramAST.identifier));
+
+	std::string s1 = std::string(noiseGenProgram.identifier);
+	std::string s2 = std::string(mainProgramAST.identifier);
+	std::string s3 = std::string(fxaaProgramAST.identifier);
+	std::string s4 = std::string(combinerProgramAST.identifier);
+
+	ShaderProgramResource *r1 = (ShaderProgramResource*)shaderWatcher.lookupResource(s1);
+	ShaderProgramResource *r2 = (ShaderProgramResource*)shaderWatcher.lookupResource(s2);
+	ShaderProgramResource *r3 = (ShaderProgramResource*)shaderWatcher.lookupResource(s3);
+	ShaderProgramResource *r4 = (ShaderProgramResource*)shaderWatcher.lookupResource(s4);
 
 	noiseGeneratorProgram = r1->program;
 	mainProgram = r2->program;
@@ -103,11 +116,16 @@ bool initialize() {
 	shaderWatcher.addTextureResource(bloomTexture1AST);
 	shaderWatcher.addTextureResource(bloomTexture2AST);
 	shaderWatcher.addTextureResource(finalTextureAST);
+
+	std::string a1 = std::string(sceneTextureAST.identifier);
+	std::string a2 = std::string(bloomTexture1AST.identifier);
+	std::string a3 = std::string(bloomTexture2AST.identifier);
+	std::string a4 = std::string(finalTextureAST.identifier);
 	
-	Texture2DResource *t1 = (Texture2DResource*)shaderWatcher.lookupResource(std::string(sceneTextureAST.identifier));
-	Texture2DResource *t2 = (Texture2DResource*)shaderWatcher.lookupResource(std::string(bloomTexture1AST.identifier));
-	Texture2DResource *t3 = (Texture2DResource*)shaderWatcher.lookupResource(std::string(bloomTexture2AST.identifier));
-	Texture2DResource *t4 = (Texture2DResource*)shaderWatcher.lookupResource(std::string(finalTextureAST.identifier));
+	Texture2DResource *t1 = (Texture2DResource*)shaderWatcher.lookupResource(a1);
+	Texture2DResource *t2 = (Texture2DResource*)shaderWatcher.lookupResource(a2);
+	Texture2DResource *t3 = (Texture2DResource*)shaderWatcher.lookupResource(a3);
+	Texture2DResource *t4 = (Texture2DResource*)shaderWatcher.lookupResource(a4);
 
 	sceneTexture2ID = t1->texture;
 	bloomTexture1ID = t2->texture;
