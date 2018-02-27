@@ -1,13 +1,14 @@
-#include "GL/glew.h"
 
 #ifdef IS_WINDOWS
+#include "GL/glew.h"
 #include <GL/gl.h>
 #include "SDL.h"
 #include <windows.h>
 #endif
 
 #ifdef IS_OSX
-#include <OpenGL/gl.h>
+//#include <OpenGL/gl.h>
+#include <OpenGL/gl3.h>
 #include <SDL2/SDL.h>
 #endif
 
@@ -34,7 +35,7 @@ static bool RUNNING = true;
 static int w, h;
 
 static std::string getGLVersion(void) {
-	int major, minor;
+	int major = 0, minor = 0;
 	glGetIntegerv(GL_MAJOR_VERSION, &major);
 	glGetIntegerv(GL_MINOR_VERSION, &minor);
 	return "OpenGL " + std::to_string(major) + "." + std::to_string(minor);
@@ -69,20 +70,18 @@ int main(int argc, char **argv) {
 
 	SDL_GL_SetAttribute(SDL_GL_CONTEXT_PROFILE_MASK, SDL_GL_CONTEXT_PROFILE_CORE);
 	SDL_GL_SetAttribute(SDL_GL_CONTEXT_MAJOR_VERSION, 4);
-	SDL_GL_SetAttribute(SDL_GL_CONTEXT_MINOR_VERSION, 5);
+	SDL_GL_SetAttribute(SDL_GL_CONTEXT_MINOR_VERSION, 1);
 	SDL_GL_SetAttribute(SDL_GL_STENCIL_SIZE, 8);
 	SDL_GLContext context = SDL_GL_CreateContext(window);
+	SDL_GL_MakeCurrent(window, context);
 	
 
-	if (glewInit() != GLEW_OK) {
 #ifdef IS_WINDOWS
+	if (glewInit() != GLEW_OK) {
 		MessageBox(NULL, "Error initializing glew", NULL, MB_OK);
-#endif
-#ifdef IS_OSX
-		std::cout << "Error initializing glew\n";
-#endif
 		return 1;
 	}
+#endif
 
 	auto version = getGLVersion();	
 	SDL_SetWindowTitle(window, version.c_str());

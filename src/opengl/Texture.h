@@ -1,12 +1,12 @@
 #pragma once
 
-#include "GL/glew.h"
 #ifdef IS_WINDOWS
+#include "GL/glew.h"
 #include <GL/gl.h>
 #endif
 
 #ifdef IS_OSX
-#include <OpenGL/gl.h>
+#include <OpenGL/gl3.h>
 #endif
 
 class Texture2D {

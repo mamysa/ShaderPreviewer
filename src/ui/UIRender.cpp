@@ -15,14 +15,15 @@
 
 // SDL,GL3W
 #ifdef IS_WINDOWS
+#include "GL/glew.h"    
 #include <SDL.h>
 #include <SDL_syswm.h>
 #endif
 #ifdef IS_OSX
+#include <OpenGL/gl3.h>
 #include <SDL2/SDL.h>
 #include <SDL2/SDL_syswm.h>
 #endif
-#include "GL/glew.h"    // This example is using gl3w to access OpenGL functions (because it is small). You may use glew/glad/glLoadGen/etc. whatever already works for you.
 
 // Data
 static Uint64       g_Time = 0.0f;
