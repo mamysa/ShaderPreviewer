@@ -23,6 +23,21 @@ static HANDLE initializeFileHandle(const char *path) {
 }
 #endif
 
+
+#ifdef IS_OSX
+static bool fileExists(const char *path) {
+	struct stat buf; 
+	bool status = stat(path, &buf);
+
+	if (status != 0) {
+		Logger::add("Unable to open file " + std::string(path) + "\n", LogType::FAILURE);	
+		return false;
+	}
+
+	return true;
+}
+#endif
+
 // Query timestamp and return true if lastModified time is newer than the one
 // stored in the info struct.
 static bool checkandUpdateTimestamp(FileInfo& info) {
@@ -40,6 +55,8 @@ static bool checkandUpdateTimestamp(FileInfo& info) {
 #endif
 
 #ifdef IS_OSX
+	struct stat buf;
+	stat(info.filename, &buf);
 	return false;
 #endif
 }
@@ -68,6 +85,10 @@ FileInfo::FileInfo(const char *f) :
 #ifdef IS_WINDOWS
 	handle(initializeFileHandle(f)), 
 	lastUpdateTime({0, 0}),
+#endif
+#ifdef IS_OSX
+	exists(fileExists(f)), 
+	lastUpdateTime(0),
 #endif
 	filename(f)
 { }

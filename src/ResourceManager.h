@@ -8,6 +8,7 @@
 
 #ifdef IS_OSX
 #include <OpenGL/gl3.h>
+#include <sys/stat.h>
 #endif
 
 #include <string>
@@ -31,6 +32,10 @@ struct FileInfo {
 #ifdef IS_WINDOWS
 	HANDLE  handle;
 	FILETIME lastUpdateTime;
+#endif
+#ifdef IS_OSX
+	bool exists;
+	time_t lastUpdateTime;
 #endif
 	const char *filename;
 	FileInfo(const char *);
