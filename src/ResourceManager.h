@@ -35,7 +35,7 @@ struct FileInfo {
 #endif
 #ifdef IS_OSX
 	bool exists;
-	time_t lastUpdateTime;
+	struct timespec lastUpdateTime;
 #endif
 	const char *filename;
 	FileInfo(const char *);

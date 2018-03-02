@@ -1,4 +1,4 @@
-#version 450
+#version 410
 in vec4 position; 
 in vec2 texCoord;
 out vec2 fragTexCoord;

@@ -53,18 +53,21 @@ bool initialize() {
 	ResourceManager& shaderWatcher = ResourceManager::getInstance();
 	bool initSuccessful = true;
 
-	const char *defaultVertexShader= "D://Projects/ShaderPreviewV2/shaders/default.vert";
-	const char *shaderPath = "D://Projects/ShaderPreviewV2/shaders/noisetex.frag";
-	const char *mainProgramPath = "D://Projects/ShaderPreviewV2/shaders/A/testificate.frag";
-	const char *fxaaProgramPath = "D://Projects/ShaderPreviewV2/shaders/A/postprocess-bloom.frag";
-	const char *combinerProgramPath = "D://Projects/ShaderPreviewV2/shaders/A/postprocess-combiner.frag";
+	//const char *defaultVertexShader= "D://Projects/ShaderPreviewV2/shaders/default.vert";
+	const char *defaultVertexShader= "/Volumes/MyDocuments/Projects/ShaderPreviewerV2/ShaderPreview/shaders/default.vert";
+	//const char *shaderPath = "D://Projects/ShaderPreviewV2/shaders/noisetex.frag";
+	const char *mainProgramPath = "/Volumes/MyDocuments/Projects/ShaderPreviewerV2/ShaderPreview/shaders/scene.frag";
+	//const char *fxaaProgramPath = "D://Projects/ShaderPreviewV2/shaders/A/postprocess-bloom.frag";
+	const char *combinerProgramPath = "/Volumes/MyDocuments/Projects/ShaderPreviewerV2/ShaderPreview/shaders/postfx.frag";
 
 
+#if 0
 	ASTNodeShaderProgram noiseGenProgram = {
 		"noise_generator", 
 		defaultVertexShader,
 		shaderPath
 	};
+#endif
 
 	ASTNodeShaderProgram mainProgramAST = {
 		"main_scene_program",
@@ -72,11 +75,13 @@ bool initialize() {
 		mainProgramPath
 	};
 
+#if 0
 	ASTNodeShaderProgram fxaaProgramAST = {
 		"fxaa_program",
 		defaultVertexShader,
 		fxaaProgramPath
 	};
+#endif
 
 	ASTNodeShaderProgram combinerProgramAST = {
 		"combiner_program",
@@ -85,25 +90,25 @@ bool initialize() {
 	};
 
 
-	shaderWatcher.addShaderProgramResource(noiseGenProgram);
+	//shaderWatcher.addShaderProgramResource(noiseGenProgram);
 	shaderWatcher.addShaderProgramResource(mainProgramAST);
-	shaderWatcher.addShaderProgramResource(fxaaProgramAST);
+	//shaderWatcher.addShaderProgramResource(fxaaProgramAST);
 	shaderWatcher.addShaderProgramResource(combinerProgramAST);
 
 
-	std::string s1 = std::string(noiseGenProgram.identifier);
+	//std::string s1 = std::string(noiseGenProgram.identifier);
 	std::string s2 = std::string(mainProgramAST.identifier);
-	std::string s3 = std::string(fxaaProgramAST.identifier);
+	//std::string s3 = std::string(fxaaProgramAST.identifier);
 	std::string s4 = std::string(combinerProgramAST.identifier);
 
-	ShaderProgramResource *r1 = (ShaderProgramResource*)shaderWatcher.lookupResource(s1);
+	//ShaderProgramResource *r1 = (ShaderProgramResource*)shaderWatcher.lookupResource(s1);
 	ShaderProgramResource *r2 = (ShaderProgramResource*)shaderWatcher.lookupResource(s2);
-	ShaderProgramResource *r3 = (ShaderProgramResource*)shaderWatcher.lookupResource(s3);
+	//ShaderProgramResource *r3 = (ShaderProgramResource*)shaderWatcher.lookupResource(s3);
 	ShaderProgramResource *r4 = (ShaderProgramResource*)shaderWatcher.lookupResource(s4);
 
-	noiseGeneratorProgram = r1->program;
+	//noiseGeneratorProgram = r1->program;
 	mainProgram = r2->program;
-	fxaaProgram = r3->program;
+	//fxaaProgram = r3->program;
 	combinerProgram = r4->program;
 
 
@@ -218,7 +223,7 @@ void drawFrame() {
 	mainProgram->use(0);
 	glBindFramebuffer(GL_FRAMEBUFFER, 0);
 
-
+#if 0
 	// bloom pass 1  
 	glBindFramebuffer(GL_FRAMEBUFFER, bloomFramebuffer1ID);
 	fxaaProgram->use();
@@ -248,19 +253,17 @@ void drawFrame() {
 	fxaaProgram->use(0);
 	glBindFramebuffer(GL_FRAMEBUFFER, 0);
 
+#endif
 	assert(glGetError() == GL_NO_ERROR);
 
 	glBindFramebuffer(GL_FRAMEBUFFER, finalFramebufferID);
 	combinerProgram->use();
-		combinerProgram->uniform("u_texture2", 1);
-		combinerProgram->uniform("u_texture1", 2);
+		combinerProgram->uniform("u_texture1", 1);
 		glActiveTexture(GL_TEXTURE1); sceneTexture2ID->bind(); 
-		glActiveTexture(GL_TEXTURE2); bloomTexture2ID->bind(); 
 		screenQuad->bind();
 		screenQuad->draw();
 		screenQuad->bind(0);
 		glActiveTexture(GL_TEXTURE1); sceneTexture2ID->bind(0); 
-		glActiveTexture(GL_TEXTURE2); bloomTexture2ID->bind(0); 
 	combinerProgram->use(0);
 	glBindFramebuffer(GL_FRAMEBUFFER, 0);
 

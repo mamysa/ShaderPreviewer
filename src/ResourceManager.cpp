@@ -6,6 +6,10 @@
 #include "opengl/Texture.h"
 #include "Logger.h"
 
+#ifdef IS_OSX
+#include <time.h>
+#endif
+
 
 #ifdef IS_WINDOWS 
 static HANDLE initializeFileHandle(const char *path) {
@@ -56,7 +60,12 @@ static bool checkandUpdateTimestamp(FileInfo& info) {
 
 #ifdef IS_OSX
 	struct stat buf;
-	stat(info.filename, &buf);
+	int status = stat(info.filename, &buf);
+	if (status == 0 &&  buf.st_mtimespec.tv_sec > info.lastUpdateTime.tv_sec) {
+		info.lastUpdateTime = buf.st_mtimespec;
+		return true;
+	}
+
 	return false;
 #endif
 }
@@ -88,7 +97,7 @@ FileInfo::FileInfo(const char *f) :
 #endif
 #ifdef IS_OSX
 	exists(fileExists(f)), 
-	lastUpdateTime(0),
+	lastUpdateTime({0}),
 #endif
 	filename(f)
 { }
@@ -99,7 +108,7 @@ bool FileInfo::isOK(void) {
 #endif
 
 #ifdef IS_OSX
-	return false;
+	return exists;
 #endif
 }
 
